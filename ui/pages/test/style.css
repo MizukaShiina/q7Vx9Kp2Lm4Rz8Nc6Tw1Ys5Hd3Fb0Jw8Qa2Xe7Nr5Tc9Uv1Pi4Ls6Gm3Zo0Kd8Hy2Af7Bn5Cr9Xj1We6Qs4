@@ -1,0 +1,218 @@
+/* Overlay Test page - fire fake events into the local overlay relay. */
+
+.test-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 660px;
+}
+
+.ot-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 0.8rem;
+}
+
+.ot-status__label {
+  text-transform: uppercase;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--accent);
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.ot-status__value {
+  font-family: monospace;
+  color: var(--text-muted);
+}
+
+.ot-status[data-state="on"] {
+  border-color: rgba(0, 242, 255, 0.22);
+  background: rgba(0, 242, 255, 0.06);
+}
+.ot-status[data-state="on"] .ot-status__value {
+  color: #a7f3d0;
+}
+.ot-status[data-state="off"] {
+  border-color: rgba(239, 68, 68, 0.22);
+  background: rgba(239, 68, 68, 0.06);
+}
+.ot-status[data-state="off"] .ot-status__value {
+  color: #ff9d9d;
+}
+
+.ot-notice {
+  padding: 9px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(251, 191, 36, 0.28);
+  background: rgba(251, 191, 36, 0.08);
+  font-size: 0.8rem;
+  color: #ffd479;
+}
+
+.ot-controls {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ot-controls--loop {
+  padding-top: 4px;
+}
+
+.ot-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ot-field--inline {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.ot-field__label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.ot-field__suffix {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.ot-field select,
+.ot-field input {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  padding: 0.5rem 0.7rem;
+  font-size: 0.85rem;
+  min-width: 150px;
+}
+
+.ot-field select:focus,
+.ot-field input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.ot-btn {
+  padding: 0.55rem 1rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.05s ease;
+}
+
+.ot-btn:active {
+  transform: translateY(1px);
+}
+
+.ot-btn--primary {
+  background: rgba(0, 242, 255, 0.12);
+  color: var(--accent);
+  border-color: rgba(0, 242, 255, 0.35);
+}
+
+.ot-btn--primary:hover {
+  background: rgba(0, 242, 255, 0.2);
+}
+
+.ot-btn--danger {
+  background: transparent;
+  color: var(--text);
+}
+
+.ot-btn--danger:hover {
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.ot-btn--danger[data-running="true"] {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+.ot-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.ot-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.ot-stat__num {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.ot-stat__label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.ot-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-family: monospace;
+  font-size: 0.75rem;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.ot-feed__empty,
+.ot-feed__entry {
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.ot-feed__empty {
+  color: var(--text-muted);
+}
+
+.ot-feed__entry {
+  color: #a7f3d0;
+}
+
+.ot-feed__entry .ot-feed__time {
+  color: var(--text-muted);
+  margin-right: 8px;
+}
+
+.ot-feed__entry .ot-feed__event {
+  color: var(--accent);
+  font-weight: 700;
+}

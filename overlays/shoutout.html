@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            margin: 0;
+            background: transparent;
+            overflow: hidden;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        #shoutoutContainer {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            width: auto;
+            max-width: 45vw;
+            height: 20vh;
+            min-height: 180px;
+            
+
+            background: rgba(15, 15, 15, 0.95);
+            color: white;
+
+            display: flex;
+            transform: translateX(-110%);
+            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        #shoutoutContainer.active {
+            transform: translateX(0);
+            border-left: 6px solid #9146ff;
+        }
+
+        #shoutoutContainer.exit {
+            transform: translateX(-110%);
+        }
+
+        .clip-container {
+            display: flex;
+            width: 100%;
+        }
+
+        .clip-thumbnail {
+            width: calc(20vh * (16/9));
+            height: 100%;
+            background: black;
+            flex-shrink: 0;
+        }
+
+        .clip-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border: none;
+        }
+
+        .clip-info {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            flex-grow: 1;
+            min-width: 100px;
+            padding-right: 40px;
+        }
+
+        .username {
+            font-size: 28px;
+            font-weight: bold;
+            color: #9146ff;
+            line-height: 1.2;
+            word-break: break-word;
+        }
+
+        .clip-title {
+            font-size: 15px;
+            margin-top: 0;
+            line-height: 1.4;
+            word-break: break-word;
+
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .shoutout-badge {
+            margin-top: 10px;
+            font-size: 12px;
+            background: #9146ff;
+            padding: 5px 10px;
+            border-radius: 4px;
+            width: fit-content;
+            font-weight: 600;
+        }
+
+        #status {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+
+            font-family: monospace;
+            font-size: 14px;
+
+            padding: 6px 8px;
+            background: rgba(0, 0, 0, 0.6);
+            color: #ff4d4d;
+
+            display: none;
+        }
+
+        #status.show {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="status">SHOUTOUT OVERLAY: NOT CONNECTED</div>
+    <div id="shoutoutContainer"></div>
+
+    <script src="script.js"></script>
+    <script>
+        const shoutoutContainer = document.getElementById("shoutoutContainer");
+        let shoutoutTimeout = null;
+
+        // Connect to the overlay relay served by the WebUI (same host/port as this page).
+        const relayUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + (location.host || '127.0.0.1:8766');
+
+        function handleShoutoutDisplay(data) {
+            const user = data.user;
+            const clip = data.clip;
+
+            if (shoutoutTimeout) clearTimeout(shoutoutTimeout);
+
+            if (clip && clip.thumbnail_url) {
+                shoutoutContainer.innerHTML = `
+                    <div class="clip-container">
+                        <div class="clip-thumbnail">
+                            <img src="${clip.thumbnail_url}"
+                                 onerror="this.closest('.clip-container').innerHTML = '<div style=\\'padding:20px\\'><div class=\\'username\\'>👋 ${user}</div><div>twitch.tv/${user}</div></div>'">
+                        </div>
+
+                        <div class="clip-info">
+                            <div class="username">👾 ${user}</div>
+                            <div class="clip-title">${clip?.title || ""}</div>
+                            <div class="shoutout-badge">Clip Highlight</div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                fallbackToText(user);
+            }
+
+            shoutoutContainer.classList.add("active");
+            shoutoutContainer.classList.remove("exit");
+
+            shoutoutTimeout = setTimeout(() => {
+                shoutoutContainer.classList.add("exit");
+                setTimeout(() => {
+                    shoutoutContainer.innerHTML = "";
+                    shoutoutContainer.classList.remove("active", "exit");
+                }, 800);
+            }, 8000);
+        }
+
+        // Helper function for shoutout, kept local
+        function fallbackToText(user) {
+            shoutoutContainer.innerHTML = `
+                <div style="padding:20px">
+                    <div class="username">👋 ${user}</div>
+                    <div>twitch.tv/${user}</div>
+                </div>`;
+        }
+
+        // Initialize and connect WebSocket client
+        const wsClient = new OverlayWebSocketClient(relayUrl, 'status', 'SHOUTOUT');
+        wsClient.registerHandler('shoutout', handleShoutoutDisplay);
+        wsClient.connect();
+    </script>
+
+</body>
+
+</html>

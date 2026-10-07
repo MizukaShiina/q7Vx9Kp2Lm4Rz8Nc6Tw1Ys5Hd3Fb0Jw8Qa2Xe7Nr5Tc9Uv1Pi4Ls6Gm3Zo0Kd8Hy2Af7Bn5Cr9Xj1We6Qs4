@@ -1,0 +1,115 @@
+.page-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.page-shell__description,
+.muted-copy {
+  margin: 0;
+  color: #8d95ab;
+  line-height: 1.5;
+}
+
+/* Response table */
+.responses-table {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+}
+
+.responses-table__header {
+  display: grid;
+  grid-template-columns: 1.4fr 0.8fr 3fr;
+  gap: 0.75rem;
+  padding: 0 0.85rem;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #8d95ab;
+}
+
+.responses-table__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.responses-row {
+  display: grid;
+  grid-template-columns: 1.4fr 0.8fr 3fr;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.6rem 0.85rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.responses-row:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.responses-row.is-dirty {
+  background: rgba(0, 242, 255, 0.07);
+  border-color: rgba(0, 242, 255, 0.3);
+  box-shadow: inset 3px 0 0 #00f2ff;
+}
+
+.responses-col--key {
+  font-family: monospace;
+  font-size: 0.82rem;
+  color: #c0c8e0;
+  word-break: break-all;
+}
+
+.responses-input {
+  width: 100%;
+  padding: 0.4rem 0.55rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.2);
+  color: #f6f8ff;
+  font-size: 0.82rem;
+  box-sizing: border-box;
+}
+
+.responses-row.is-dirty .responses-col--text .responses-input {
+  border-color: rgba(0, 242, 255, 0.35);
+  background: rgba(0, 242, 255, 0.08);
+}
+
+/* Category badge */
+.responses-category-badge {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(0, 242, 255, 0.1);
+  border: 1px solid rgba(0, 242, 255, 0.2);
+  color: #00f2ff;
+  font-size: 0.68rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Empty state */
+.responses-empty {
+  padding: 1.5rem;
+  text-align: center;
+  color: #8d95ab;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 720px) {
+  .responses-table__header,
+  .responses-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+
+  .responses-col--key,
+  .responses-col--category {
+    grid-column: 1 / -1;
+  }
+}

@@ -1,0 +1,34 @@
+<section class="page-card">
+  <div class="page-card__header">
+    <div>
+      <p class="panel-label">Diagnostics</p>
+      <h3>Logs</h3>
+    </div>
+    <div class="pill-group">
+      <span class="pill logs-live-pill" id="logs-live-pill"><span class="status-pill__dot"></span>Waiting for state…</span>
+      <button class="pill pill--button" type="button" id="logs-copy" title="Copy the visible log lines">Copy</button>
+    </div>
+  </div>
+  <p class="page-card__description">Live event feed from the connected services. System logs track bot health; chat logs show what the bot sees in channel.</p>
+
+  <div class="page-grid logs-metrics">
+    <div class="metric-card"><strong id="logs-events">—</strong><span>Events in buffer</span></div>
+    <div class="metric-card"><strong id="logs-warnings">—</strong><span>Warnings / errors</span></div>
+    <div class="metric-card"><strong id="logs-chat">—</strong><span>Chat entries</span></div>
+  </div>
+
+  <div class="logs-tabs" role="tablist" aria-label="Log views">
+    <button class="logs-tab is-active" type="button" role="tab" aria-selected="true" data-log-tab="all">All</button>
+    <button class="logs-tab" type="button" role="tab" aria-selected="false" data-log-tab="chat">Chat</button>
+    <button class="logs-tab" type="button" role="tab" aria-selected="false" data-log-tab="system">System</button>
+    <button class="logs-tab logs-tab--issues" type="button" role="tab" aria-selected="false" data-log-tab="issues" title="Warnings and errors only">⚠ Issues</button>
+  </div>
+
+  <div class="logs-view">
+    <div class="logs-output" id="logs-output-all" role="log" tabindex="0" aria-label="All log output" data-log-stream="all"></div>
+    <div class="logs-output" id="logs-output-chat" role="log" tabindex="0" aria-label="Chat log output" data-log-stream="chat" hidden></div>
+    <div class="logs-output" id="logs-output-system" role="log" tabindex="0" aria-label="System log output" data-log-stream="system" hidden></div>
+    <div class="logs-output" id="logs-output-issues" role="log" tabindex="0" aria-label="Warnings and errors output" data-log-stream="issues" hidden></div>
+    <button class="logs-jump" type="button" id="logs-jump" hidden>↓ New logs</button>
+  </div>
+</section>

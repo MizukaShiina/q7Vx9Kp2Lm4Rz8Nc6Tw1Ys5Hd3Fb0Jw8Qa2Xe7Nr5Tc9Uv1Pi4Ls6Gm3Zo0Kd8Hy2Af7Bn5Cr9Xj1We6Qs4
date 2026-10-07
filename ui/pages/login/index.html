@@ -1,0 +1,45 @@
+<header class="app-header app-header--login" role="banner">
+  <div class="app-header__title">
+    <div class="brand__icon header-icon">
+      <img src="./assets/logo.svg" alt="Brand Icon" />
+    </div>
+    <div class="app-header__text">
+      <strong>MizuBot Web</strong>
+      <span class="app-header__subtitle">Control Surface</span>
+    </div>
+    <div id="connection-status" class="status-pill status-pill--disconnected" role="status" aria-live="polite">
+      <span class="status-pill__dot"></span>
+      <span class="status-pill__label">Disconnected</span>
+    </div>
+  </div>
+  <div class="app-header__controls">
+    <button class="window-btn" data-action="minimize" title="Minimize">—</button>
+    <button class="window-btn" data-action="toggle-fullscreen" title="Toggle Fullscreen">▢</button>
+    <button class="window-btn window-btn--danger" data-action="close" title="Close">✕</button>
+  </div>
+</header>
+
+<section class="auth-card">
+  <div class="auth-card__hero">
+    <div class="hero__badge">RemoteUI</div>
+    <h2>Welcome back</h2>
+    <p>Connect to your stream control surface and keep observability close at hand.</p>
+  </div>
+  <form class="auth-form" id="login-form">
+    <label class="field">
+      <span>Username</span>
+      <input type="text" id="username" value="mizu" autocomplete="username" />
+    </label>
+    <label class="field">
+      <span>Password</span>
+      <input type="password" id="password" value="mizu" autocomplete="current-password" />
+    </label>
+    <div class="login-error" id="login-error" role="alert" aria-live="assertive" hidden>
+      <span class="login-error__icon" aria-hidden="true">!</span>
+      <span class="login-error__message"></span>
+    </div>
+    <div class="form-actions">
+      <button class="primary-button" id="login-submit" type="submit">Login</button>
+    </div>
+  </form>
+</section>

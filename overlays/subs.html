@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Sub Overlay</title>
+
+    <style>
+        body {
+            margin: 0;
+            background: transparent;
+            overflow: hidden;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        #container {
+            position: fixed;
+            inset: 0;
+
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+
+            opacity: 0;
+            pointer-events: none;
+            text-align: center;
+            padding: 0 50px;
+            box-sizing: border-box;
+        }
+
+        #main {
+            font-size: 110px;
+            font-weight: 900;
+            color: white;
+
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            word-wrap: break-word;
+            max-width: 90vw;
+
+            text-shadow:
+                0 0 10px rgba(0, 200, 255, 0.8),
+                0 0 25px rgba(0, 200, 255, 0.5);
+        }
+
+        #sub {
+            font-size: 38px;
+            margin-top: 20px;
+            color: #ffd700;
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.6);
+        }
+
+        .show {
+            opacity: 1 !important;
+            animation: pop 0.35s ease-out forwards;
+        }
+
+        .hide {
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        @keyframes pop {
+            0% {
+                transform: scale(0.6);
+                opacity: 0;
+            }
+
+            70% {
+                transform: scale(1.08);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes glow {
+            0% {
+                filter: drop-shadow(0 0 10px rgba(0, 200, 255, 0.4));
+            }
+
+            50% {
+                filter: drop-shadow(0 0 25px rgba(0, 200, 255, 0.8));
+            }
+
+            100% {
+                filter: drop-shadow(0 0 10px rgba(0, 200, 255, 0.4));
+            }
+        }
+
+        #container.show #main {
+            animation:
+                pop 0.35s ease-out,
+                glow 2s infinite;
+        }
+
+        #status {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+
+            font-family: monospace;
+            font-size: 14px;
+
+            padding: 6px 8px;
+            background: rgba(0, 0, 0, 0.6);
+            color: #ff4d4d;
+
+            display: none;
+        }
+
+        #status.show {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="status">SUBS OVERLAY: NOT CONNECTED</div>
+
+    <div id="container">
+        <div id="main"></div>
+        <div id="sub"></div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        const subContainer = document.getElementById('container');
+        const subMain = document.getElementById('main');
+        const subText = document.getElementById('sub');
+        let subHideTimeout = null;
+
+        // Connect to the overlay relay served by the WebUI (same host/port as this page).
+        const relayUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + (location.host || '127.0.0.1:8766');
+
+        function handleSubDisplay(data) {
+            const user = data?.user || data?.username || "Someone";
+            const months = data?.months ?? 1;
+
+            subMain.innerText = `${user} SUBSCRIBED!`;
+            subText.innerText = `${months} month${months !== 1 ? 's' : ''} supported`;
+
+            showSubOverlay();
+        }
+
+        function handleGiftSubDisplay(data) {
+            const sender = data?.sender || "Someone";
+            const recipient = data?.recipient || "a viewer";
+
+            subMain.innerText = `${sender} GIFTED A SUB!`;
+            subText.innerText = `to ${recipient}`;
+
+            showSubOverlay();
+        }
+
+        function showSubOverlay() {
+            subContainer.classList.remove('show');
+            subContainer.classList.remove('hide');
+
+            void subContainer.offsetWidth; // Trigger reflow
+
+            subContainer.classList.add('show');
+
+            clearTimeout(subHideTimeout);
+
+            subHideTimeout = setTimeout(() => {
+                subContainer.classList.remove('show');
+                subContainer.classList.add('hide');
+            }, 6000);
+        }
+
+        // Initialize and connect WebSocket client
+        const wsClient = new OverlayWebSocketClient(relayUrl, 'status', 'SUBS');
+        wsClient.registerHandler('sub', handleSubDisplay);
+        wsClient.registerHandler('gift_sub', handleGiftSubDisplay);
+        wsClient.connect();
+    </script>
+
+</body>
+
+</html>

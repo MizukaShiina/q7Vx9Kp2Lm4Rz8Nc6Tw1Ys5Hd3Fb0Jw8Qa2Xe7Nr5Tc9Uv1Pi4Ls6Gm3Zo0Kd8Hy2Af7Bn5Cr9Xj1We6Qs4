@@ -1,0 +1,396 @@
+/* ============================================
+   Announcement Page Styles
+   ============================================ */
+
+.announcement-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  color: #f5f7ff;
+}
+
+/* Header */
+.announcement-shell__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.announcement-shell__header h3 {
+  margin: 0;
+}
+
+/* Platform Greetings Grid */
+.announcement-greetings {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+/* Card Base */
+.announcement-card {
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: rgba(8, 12, 22, 0.72);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.18);
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.announcement-card__header {
+  padding: 1rem 1.1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.announcement-card__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #f5f7ff;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.announcement-card__body {
+  padding: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+/* Labels */
+.announcement-label {
+  display: block;
+  font-weight: 700;
+  color: #c7d0ea;
+  font-size: 0.9rem;
+  margin-bottom: 0.35rem;
+}
+
+/* Inputs */
+.announcement-input {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  padding: 0.75rem 0.9rem;
+  font: inherit;
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.announcement-input:focus {
+  outline: none;
+  border-color: rgba(0, 242, 255, 0.5);
+  box-shadow: 0 0 0 3px rgba(0, 242, 255, 0.1);
+}
+
+.announcement-input::placeholder {
+  color: var(--muted);
+}
+
+/* Textareas */
+.announcement-textarea {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  padding: 0.75rem 0.9rem;
+  font: inherit;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  resize: vertical;
+  min-height: 80px;
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.announcement-textarea:focus {
+  outline: none;
+  border-color: rgba(0, 242, 255, 0.5);
+  box-shadow: 0 0 0 3px rgba(0, 242, 255, 0.1);
+}
+
+.announcement-textarea::placeholder {
+  color: var(--muted);
+  font-family: Inter, "Segoe UI", Roboto, sans-serif;
+}
+
+.announcement-textarea--readonly {
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--muted);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.announcement-textarea--readonly:focus {
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: none;
+}
+
+/* Checkboxes */
+.announcement-checkboxes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.announcement-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  cursor: pointer;
+  user-select: none;
+  font-size: 0.9rem;
+  color: #dce3f8;
+  transition: color 180ms ease;
+}
+
+.announcement-checkbox:hover {
+  color: #f5f7ff;
+}
+
+.announcement-checkbox input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--accent);
+  flex-shrink: 0;
+}
+
+.announcement-checkbox span {
+  flex: 1;
+}
+
+.announcement-checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.announcement-checkbox-group__label {
+  font-weight: 600;
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.announcement-checkbox-group .announcement-checkbox {
+  font-size: 0.85rem;
+}
+
+/* Action Buttons */
+.announcement-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding-top: 0.5rem;
+}
+
+.announcement-actions button {
+  flex: 1;
+  min-width: 140px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .announcement-greetings {
+    grid-template-columns: 1fr;
+  }
+
+  .announcement-actions {
+    flex-direction: column;
+  }
+
+  .announcement-actions button {
+    width: 100%;
+  }
+}
+
+/* Platform-specific accent colors for card titles */
+.announcement-card:first-child .announcement-card__title {
+  color: #1DA1F2;
+}
+
+.announcement-card:nth-child(2) .announcement-card__title {
+  color: #5865F2;
+}
+
+/* Platform-specific gradient backgrounds */
+.announcement-greetings .announcement-card:first-child {
+  background: linear-gradient(135deg, rgba(29, 161, 242, 0.14), rgba(255, 255, 255, 0.03));
+  border-color: rgba(29, 161, 242, 0.2);
+}
+
+.announcement-greetings .announcement-card:last-child {
+  background: linear-gradient(135deg, rgba(88, 101, 242, 0.14), rgba(255, 255, 255, 0.03));
+  border-color: rgba(88, 101, 242, 0.2);
+}
+
+/* Modal */
+.announcement-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+}
+
+.announcement-modal-overlay:not(.hidden) {
+  display: flex;
+}
+
+.announcement-modal {
+  background: rgba(8, 12, 22, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 20px;
+  padding: 1.5rem;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.announcement-modal__header {
+  margin-bottom: 1rem;
+}
+
+.announcement-modal__header h3 {
+  margin: 0;
+  font-size: 1.3rem;
+  color: #f5f7ff;
+}
+
+.announcement-modal__body {
+  margin-bottom: 1.5rem;
+}
+
+.announcement-modal__body p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.announcement-modal__footer {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+.announcement-modal__footer button {
+  min-width: 100px;
+}
+
+/* Preview Modal */
+.announcement-modal--preview {
+  max-width: 900px;
+  width: 95%;
+}
+
+.announcement-preview {
+  display: flex;
+  gap: 1rem;
+  max-height: 500px;
+}
+
+.announcement-preview__column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.announcement-preview__header {
+  padding: 0.75rem 1rem;
+  border-radius: 12px 12px 0 0;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: none;
+}
+
+.announcement-preview__column:first-child .announcement-preview__header {
+  background: linear-gradient(135deg, rgba(29, 161, 242, 0.14), rgba(255, 255, 255, 0.03));
+}
+
+.announcement-preview__column:last-child .announcement-preview__header {
+  background: linear-gradient(135deg, rgba(88, 101, 242, 0.14), rgba(255, 255, 255, 0.03));
+}
+
+.announcement-preview__title {
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.announcement-preview__column:first-child .announcement-preview__title {
+  color: #1DA1F2;
+}
+
+.announcement-preview__column:last-child .announcement-preview__title {
+  color: #5865F2;
+}
+
+.announcement-preview__content {
+  flex: 1;
+  padding: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0 0 12px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  overflow-y: auto;
+  max-height: 350px;
+}
+
+.announcement-preview__content pre {
+  margin: 0;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: #dce3f8;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.announcement-preview__separator {
+  width: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .announcement-preview {
+    flex-direction: column;
+  }
+  
+  .announcement-preview__separator {
+    width: 100%;
+    height: 1px;
+  }
+}

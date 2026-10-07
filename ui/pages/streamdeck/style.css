@@ -1,0 +1,222 @@
+.streamdeck-shell {
+  gap: 16px;
+}
+
+.streamdeck-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 13px;
+  border: 1px solid rgba(0, 242, 255, 0.2);
+  border-radius: 10px;
+  background: rgba(0, 242, 255, 0.055);
+  color: #b9c5d9;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.streamdeck-notice p {
+  margin: 0;
+}
+
+.streamdeck-notice strong {
+  color: #f6f8ff;
+}
+
+.streamdeck-notice__icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 19px;
+  width: 19px;
+  height: 19px;
+  border: 1px solid rgba(0, 242, 255, 0.32);
+  border-radius: 50%;
+  color: #00f2ff;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.streamdeck-toolbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.streamdeck-toolbar h3 {
+  margin: 0;
+  color: #f6f8ff;
+  font-size: 1rem;
+}
+
+.streamdeck-status {
+  color: #8d95ab;
+  font-size: 0.75rem;
+  text-align: right;
+}
+
+.streamdeck-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
+  gap: 12px;
+}
+
+.streamdeck-card {
+  display: flex;
+  min-height: 206px;
+  flex-direction: column;
+  padding: 13px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 13px;
+  background:
+    radial-gradient(circle at 100% 0, rgba(0, 242, 255, 0.055), transparent 42%),
+    rgba(255, 255, 255, 0.025);
+  transition: border-color 160ms ease, transform 160ms ease, background 160ms ease;
+}
+
+.streamdeck-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(0, 242, 255, 0.24);
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+.streamdeck-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.streamdeck-card__icon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid currentColor;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 0.95rem;
+}
+
+.streamdeck-card__icon--cyan { color: #2be0ff; }
+.streamdeck-card__icon--violet { color: #b19aff; }
+.streamdeck-card__icon--pink { color: #ff83bd; }
+.streamdeck-card__icon--amber { color: #ffc66d; }
+
+.streamdeck-card__tag {
+  padding: 3px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 999px;
+  color: #8d95ab;
+  font-size: 0.65rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.streamdeck-card h4 {
+  margin: 13px 0 4px;
+  color: #f6f8ff;
+  font-size: 0.9rem;
+}
+
+.streamdeck-card p {
+  margin: 0;
+  color: #8d95ab;
+  font-size: 0.74rem;
+  line-height: 1.45;
+}
+
+.streamdeck-keys {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 12px;
+  color: #78849a;
+  font-size: 0.68rem;
+}
+
+.streamdeck-keys kbd {
+  min-width: 19px;
+  padding: 3px 6px;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.2);
+  color: #c6d0e3;
+  font: inherit;
+  text-align: center;
+}
+
+.streamdeck-card__button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: auto;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.035);
+  color: #c7d1e4;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.73rem;
+  transition: color 140ms ease, border-color 140ms ease, background 140ms ease;
+}
+
+.streamdeck-card__button:hover,
+.streamdeck-card__button:focus-visible {
+  border-color: rgba(0, 242, 255, 0.3);
+  background: rgba(0, 242, 255, 0.08);
+  color: #2be0ff;
+}
+
+.streamdeck-config {
+  padding: 14px;
+}
+
+.streamdeck-config .panel-card__header {
+  margin-bottom: 10px;
+}
+
+.streamdeck-config__row {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) auto minmax(90px, 0.7fr);
+  align-items: center;
+  gap: 12px;
+  padding: 9px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  color: #c7d1e4;
+  font-size: 0.78rem;
+}
+
+.streamdeck-config__row .streamdeck-keys {
+  margin-top: 0;
+}
+
+.streamdeck-config__state {
+  color: #8d95ab;
+  font-size: 0.7rem;
+  text-align: right;
+}
+
+@media (max-width: 680px) {
+  .streamdeck-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .streamdeck-status {
+    text-align: left;
+  }
+}
+
+@media (max-width: 460px) {
+  .streamdeck-config__row {
+    grid-template-columns: 1fr auto;
+  }
+
+  .streamdeck-config__state {
+    grid-column: 1 / -1;
+    text-align: left;
+  }
+}

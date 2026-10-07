@@ -1,0 +1,62 @@
+<section class="page-shell streamdeck-shell">
+  <div class="streamdeck-notice" role="note">
+    <span class="streamdeck-notice__icon" aria-hidden="true">i</span>
+    <p><strong>Shortcut preview</strong> These sample key combinations are visual placeholders and are not registered as global shortcuts yet.</p>
+  </div>
+
+  <div class="streamdeck-toolbar">
+    <div>
+      <p class="panel-label">Action board</p>
+      <h3>Quick actions</h3>
+    </div>
+    <span class="streamdeck-status" id="streamdeck-status" role="status" aria-live="polite">Ready · no action sent</span>
+  </div>
+
+  <div class="streamdeck-grid" id="streamdeck-grid">
+    <article class="streamdeck-card">
+      <div class="streamdeck-card__top">
+        <span class="streamdeck-card__icon streamdeck-card__icon--cyan" aria-hidden="true">▶</span>
+        <span class="streamdeck-card__tag">Giveaway</span>
+      </div>
+      <h4>Start giveaway</h4>
+      <p>Open a new giveaway and accept entries.</p>
+      <div class="streamdeck-keys" aria-label="Ctrl plus Alt plus 1">
+        <kbd>Ctrl</kbd><span>+</span><kbd>Alt</kbd><span>+</span><kbd>1</kbd>
+      </div>
+      <button class="streamdeck-card__button" type="button" data-action-id="giveaway_start">Try action <span aria-hidden="true">↗</span></button>
+    </article>
+
+    <article class="streamdeck-card">
+      <div class="streamdeck-card__top">
+        <span class="streamdeck-card__icon streamdeck-card__icon--violet" aria-hidden="true">■</span>
+        <span class="streamdeck-card__tag">Giveaway</span>
+      </div>
+      <h4>Stop giveaway</h4>
+      <p>Finish the giveaway after a winner has been drawn.</p>
+      <div class="streamdeck-keys" aria-label="Ctrl plus Alt plus 2">
+        <kbd>Ctrl</kbd><span>+</span><kbd>Alt</kbd><span>+</span><kbd>2</kbd>
+      </div>
+      <button class="streamdeck-card__button" type="button" data-action-id="giveaway_stop">Try action <span aria-hidden="true">↗</span></button>
+    </article>
+  </div>
+
+  <section class="streamdeck-config panel-card" aria-labelledby="streamdeck-config-title">
+    <div class="panel-card__header">
+      <div>
+        <p class="panel-label">Configuration preview</p>
+        <h4 id="streamdeck-config-title">Sample mappings</h4>
+      </div>
+      <span class="status-chip">Preview only</span>
+    </div>
+    <div class="streamdeck-config__row">
+      <span>Start giveaway</span>
+      <span class="streamdeck-keys"><kbd>Ctrl</kbd><span>+</span><kbd>Alt</kbd><span>+</span><kbd>1</kbd></span>
+      <span class="streamdeck-config__state">Not registered</span>
+    </div>
+    <div class="streamdeck-config__row">
+      <span>Stop giveaway</span>
+      <span class="streamdeck-keys"><kbd>Ctrl</kbd><span>+</span><kbd>Alt</kbd><span>+</span><kbd>2</kbd></span>
+      <span class="streamdeck-config__state">Not registered</span>
+    </div>
+  </section>
+</section>

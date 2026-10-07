@@ -1,0 +1,136 @@
+<div class="announcement-shell">
+  
+  <!-- Platform Greetings -->
+  <div class="announcement-greetings">
+    <!-- Twitter/X Greeting -->
+    <div class="announcement-card">
+      <div class="announcement-card__header">
+        <h4 class="announcement-card__title">X / Twitter</h4>
+      </div>
+      <div class="announcement-card__body">
+        <label class="announcement-label">Greeting</label>
+        <input 
+          type="text" 
+          class="announcement-input" 
+          id="twitter-greeting" 
+          value="🔴 We're LIVE!"
+          placeholder="Enter Twitter greeting..."
+        >
+      </div>
+    </div>
+
+    <!-- Discord Greeting -->
+    <div class="announcement-card">
+      <div class="announcement-card__header">
+        <h4 class="announcement-card__title">Discord</h4>
+      </div>
+      <div class="announcement-card__body">
+        <label class="announcement-label">Greeting</label>
+        <input 
+          type="text" 
+          class="announcement-input" 
+          id="discord-greeting" 
+          value="Hi @everyone, we're live!"
+          placeholder="Enter Discord greeting..."
+        >
+      </div>
+    </div>
+  </div>
+
+  <!-- Announcement Card -->
+  <div class="announcement-card">
+    <div class="announcement-card__header">
+      <h4 class="announcement-card__title">Announcement</h4>
+    </div>
+    <div class="announcement-card__body">
+      <!-- Stream Title -->
+      <label class="announcement-label">Stream Title</label>
+      <textarea 
+        class="announcement-textarea announcement-textarea--readonly" 
+        id="stream-title" 
+        readonly 
+        placeholder="Waiting for dashboard..."
+      ></textarea>
+
+      <!-- Message -->
+      <label class="announcement-label">Message</label>
+      <textarea 
+        class="announcement-textarea" 
+        id="announcement-message" 
+        placeholder="message stuff&#10;supports line breaks"
+      ></textarea>
+
+      <!-- Checkboxes -->
+      <div class="announcement-checkboxes">
+        <label class="announcement-checkbox">
+          <input type="checkbox" id="include-link" checked>
+          <span>Include stream link at bottom</span>
+        </label>
+
+        <div class="announcement-checkbox-group">
+          <span class="announcement-checkbox-group__label">Announce in:</span>
+          <label class="announcement-checkbox">
+            <input type="checkbox" id="announce-twitter" checked>
+            <span>Twitter</span>
+          </label>
+          <label class="announcement-checkbox">
+            <input type="checkbox" id="announce-discord" checked>
+            <span>Discord</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="announcement-actions">
+        <button class="ghost-button" id="preview-btn">Preview</button>
+        <button class="primary-button" id="send-announcement-btn">Send Announcement</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="announcement-modal-overlay hidden" id="announcement-modal">
+  <div class="announcement-modal">
+    <div class="announcement-modal__header">
+      <h3 id="modal-title">No Platform Selected</h3>
+    </div>
+    <div class="announcement-modal__body">
+      <p id="modal-message">Please select at least one platform (Twitter or Discord) to send the announcement.</p>
+    </div>
+    <div class="announcement-modal__footer">
+      <button class="ghost-button" id="announcement-modal-close">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- Preview Modal -->
+<div class="announcement-modal-overlay hidden" id="preview-modal">
+  <div class="announcement-modal announcement-modal--preview">
+    <div class="announcement-modal__header">
+      <h3>📢 Announcement Preview</h3>
+    </div>
+    <div class="announcement-modal__body announcement-preview">
+      <div class="announcement-preview__column">
+        <div class="announcement-preview__header">
+          <span class="announcement-preview__title">Twitter / X</span>
+        </div>
+        <div class="announcement-preview__content">
+          <pre id="preview-twitter"></pre>
+        </div>
+      </div>
+      <div class="announcement-preview__separator"></div>
+      <div class="announcement-preview__column">
+        <div class="announcement-preview__header">
+          <span class="announcement-preview__title">Discord</span>
+        </div>
+        <div class="announcement-preview__content">
+          <pre id="preview-discord"></pre>
+        </div>
+      </div>
+    </div>
+    <div class="announcement-modal__footer">
+      <button class="ghost-button" id="preview-modal-close">Close</button>
+    </div>
+  </div>
+</div>

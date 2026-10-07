@@ -1,0 +1,167 @@
+<div class="dashboard-shell">
+  <header class="app-header" role="banner">
+    <div class="app-header__title">
+      <div class="header-icon">
+        <img src="./assets/logo.svg" alt="Brand Icon" />
+      </div>
+      <div class="app-header__text">
+        <strong>MizuBot Web</strong>
+        <span class="app-header__subtitle">Control Surface</span>
+      </div>
+      <div id="connection-status-pill" class="status-pill status-pill--disconnected" role="status" aria-live="polite">
+        <span class="status-pill__dot"></span>
+        <span class="status-pill__label">Disconnected</span>
+      </div>
+    </div>
+    <div class="app-header__controls">
+      <button class="app-header__toggle" data-action="toggle-details" title="Show or hide the live details panel" aria-pressed="false">Details</button>
+      <button class="window-btn" data-action="minimize" title="Minimize">—</button>
+      <button class="window-btn" data-action="toggle-fullscreen" title="Toggle Fullscreen">▢</button>
+      <button class="window-btn window-btn--danger" data-action="close" title="Close">✕</button>
+    </div>
+  </header>
+  <aside class="sidebar">
+    <nav id="sidebar-nav" class="sidebar__nav" aria-label="Dashboard pages"></nav>
+  </aside>
+
+  <div class="dashboard-main">
+    <header class="dashboard-header">
+      <div>
+        <span class="eyebrow">MizuBot Web • control surface</span>
+        <h2 id="dashboard-title">Overview</h2>
+        <p class="dashboard-header__meta" id="dashboard-subtitle">Overview of connected systems and quick actions.</p>
+      </div>
+      <div class="dashboard-header__actions"></div>
+    </header>
+
+    <main id="page-host" class="page-host"></main>
+  </div>
+
+  <aside class="detail-panel" aria-label="Live details">
+    <div class="detail-panel__header">
+      <p class="detail-panel__eyebrow">Live details</p>
+    </div>
+
+    <div class="detail-panel__body">
+      <section class="detail-card">
+        <h4>Bot Status</h4>
+        <ul class="detail-list">
+          <li class="service-status-row">
+            <details class="service-details" data-service-details="irc">
+              <summary class="service-details__summary">
+                <span>IRC</span>
+                <strong class="status-indicator status-indicator--offline" data-service="irc">Offline</strong>
+                <span class="service-details__chevron" aria-hidden="true"></span>
+              </summary>
+              <div class="service-details__body" id="service-details-irc">
+                <dl class="service-details__list">
+                  <div><dt>Server</dt><dd data-service-detail="irc.server">—</dd></div>
+                  <div><dt>Port</dt><dd data-service-detail="irc.port">—</dd></div>
+                  <div><dt>Channel</dt><dd data-service-detail="irc.channel">—</dd></div>
+                  <div><dt>Socket</dt><dd data-service-detail="irc.socket">—</dd></div>
+                </dl>
+              </div>
+            </details>
+          </li>
+          <li class="service-status-row">
+            <div class="service-status-static">
+              <span>Discord</span>
+              <strong class="status-indicator status-indicator--offline" data-service="discord">Unavailable</strong>
+            </div>
+          </li>
+          <li class="service-status-row">
+            <details class="service-details" data-service-details="instagram">
+              <summary class="service-details__summary">
+                <span>Instagram</span>
+                <strong class="status-indicator status-indicator--offline" data-service="instagram">Unknown</strong>
+                <span class="service-details__chevron" aria-hidden="true"></span>
+              </summary>
+              <div class="service-details__body" id="service-details-instagram">
+                <dl class="service-details__list">
+                  <div><dt>Subscription</dt><dd data-service-detail="instagram.subscription">Unknown</dd></div>
+                  <div><dt>Account</dt><dd data-service-detail="instagram.account">—</dd></div>
+                  <div><dt>Receiver</dt><dd data-service-detail="instagram.receiver">—</dd></div>
+                  <div><dt>Last event</dt><dd data-service-detail="instagram.last_event">No events received</dd></div>
+                </dl>
+              </div>
+            </details>
+          </li>
+          <li class="service-status-row">
+            <details class="service-details" data-service-details="dropbox">
+              <summary class="service-details__summary">
+                <span>Dropbox</span>
+                <strong class="status-indicator status-indicator--offline" data-service="dropbox">Disabled</strong>
+                <span class="service-details__chevron" aria-hidden="true"></span>
+              </summary>
+              <div class="service-details__body" id="service-details-dropbox">
+                <dl class="service-details__list">
+                  <div><dt>Configuration</dt><dd data-service-detail="dropbox.status">Disabled</dd></div>
+                  <div><dt>Last backup</dt><dd data-service-detail="dropbox.last_backup">—</dd></div>
+                </dl>
+              </div>
+            </details>
+          </li>
+          <li class="service-status-row">
+            <div class="service-status-static">
+              <span>OBS</span>
+              <strong class="status-indicator status-indicator--offline">Offline</strong>
+            </div>
+          </li>
+          <li class="service-status-row">
+            <details class="service-details" data-service-details="overlay">
+              <summary class="service-details__summary">
+                <span>Overlay</span>
+                <strong class="status-indicator status-indicator--offline" data-service="overlay">Unavailable</strong>
+                <span class="service-details__chevron" aria-hidden="true"></span>
+              </summary>
+              <div class="service-details__body" id="service-details-overlay">
+                <dl class="service-details__list">
+                  <div><dt>Relay</dt><dd data-service-detail="overlay.relay">Checking</dd></div>
+                  <div><dt>Connected</dt><dd data-service-detail="overlay.clients">0</dd></div>
+                  <div><dt>Pages</dt><dd data-service-detail="overlay.pages">None</dd></div>
+                </dl>
+              </div>
+            </details>
+          </li>
+        </ul>
+      </section>
+
+      <section class="detail-card detail-card--discord">
+        <h4>
+          <span class="discord-icon">💬</span>
+          Discord Server
+        </h4>
+        <div class="discord-server">
+          <div class="discord-server__name">MizuBot HQ</div>
+          <ul class="discord-channels">
+            <li class="discord-channel">
+              <span class="channel-icon">#</span>
+              <span class="channel-name" data-channel-type="announce">announce</span>
+            </li>
+            <li class="discord-channel">
+              <span class="channel-icon">#</span>
+              <span class="channel-name" data-channel-type="verify">verify</span>
+            </li>
+            <li class="discord-channel">
+              <span class="channel-icon">#</span>
+              <span class="channel-name" data-channel-type="claim">claim</span>
+            </li>
+            <li class="discord-channel">
+              <span class="channel-icon">#</span>
+              <span class="channel-name" data-channel-type="store">store</span>
+            </li>
+            <li class="discord-channel">
+              <span class="channel-icon">#</span>
+              <span class="channel-name" data-channel-type="report">report</span>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="detail-card detail-card--accent">
+        <h4>Quick actions</h4>
+        <button class="ghost-button" type="button" data-action="details-refresh">Refresh status</button>
+      </section>
+    </div>
+  </aside>
+</div>

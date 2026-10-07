@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MizuBot Overlays — Local Relay</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #12121a;
+            color: #efeff1;
+            margin: 0;
+            padding: 32px;
+        }
+        h1 { font-size: 22px; margin: 0 0 4px; }
+        p { color: #9a9aa5; margin: 0 0 24px; font-size: 14px; }
+        #status { display: inline-block; padding: 6px 12px; border-radius: 6px;
+                  font-family: monospace; font-size: 13px; margin-bottom: 24px; }
+        .alive { background: #1b3a1b; color: #8dff8d; }
+        .dead  { background: #3a1b1b; color: #ff8d8d; }
+        a { display: inline-block; margin: 0 8px 8px 0; padding: 10px 16px;
+            background: #23233a; border-radius: 8px; color: #c9c9ff;
+            text-decoration: none; font-weight: 600; }
+        a:hover { background: #2d2d4a; }
+        #feed { margin-top: 28px; font-family: monospace; font-size: 13px;
+                color: #a7f3d0; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <h1>MizuBot Overlay Relay</h1>
+    <p>These pages are served locally by the WebUI on this PC. Add them as OBS
+       Browser Sources (e.g. <code>http://127.0.0.1:8766/raid.html</code>).</p>
+
+    <div id="status" class="dead">RELAY: CONNECTING…</div><br>
+
+    <a href="raid.html">Raid</a>
+    <a href="follow.html">Follow</a>
+    <a href="subs.html">Subs / Gift Subs</a>
+    <a href="shoutout.html">Shoutout</a>
+    <a href="chat.html">Chat</a>
+
+    <div id="feed"></div>
+
+    <script>
+        const statusEl = document.getElementById('status');
+        const feedEl = document.getElementById('feed');
+
+        // Same relay the overlays use — this page just shows a live event feed.
+        const relayUrl = new URL(
+            (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host
+        );
+        relayUrl.searchParams.set('source', location.pathname);
+        const ws = new WebSocket(relayUrl.toString());
+
+        ws.onopen = () => { statusEl.textContent = 'RELAY: LIVE'; statusEl.className = 'alive'; };
+        ws.onclose = () => { statusEl.textContent = 'RELAY: OFFLINE (webui closed?)'; statusEl.className = 'dead'; };
+        ws.onerror = () => { statusEl.textContent = 'RELAY: ERROR'; statusEl.className = 'dead'; };
+        ws.onmessage = (event) => {
+            const entries = feedEl.textContent
+                ? JSON.parse(feedEl.textContent)
+                : [];
+            entries.unshift(JSON.parse(event.data));
+            feedEl.textContent = JSON.stringify(entries.slice(0, 20), null, 2);
+        };
+    </script>
+</body>
+</html>

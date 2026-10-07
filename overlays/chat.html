@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MizuBot Chat Overlay</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Segoe UI', sans-serif;
+            background: transparent;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* MAIN CHAT STACK */
+        #chat-container {
+            display: flex;
+            flex-direction: column;
+
+            justify-content: flex-end; /* 👈 KEY FIX */
+            
+            height: 100vh;
+            width: 100%;
+
+            gap: 18px;
+            padding: 40px;
+            box-sizing: border-box;
+        }
+
+        /* STATUS TEXT */
+        #status {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+
+            font-family: monospace;
+            font-size: 16px;
+
+            padding: 8px 10px;
+
+            background: rgba(0, 0, 0, 0.6);
+            color: #ff4d4d;
+
+            display: none;
+        }
+
+        #status.show {
+            display: block;
+        }
+
+        /* MESSAGE BOX (THIS IS THE IMPORTANT PART) */
+        .message-box {
+            background: rgba(0, 0, 0, 0.75);
+            border-left: 6px solid #00FF7F;
+            padding: 18px 20px;
+            border-radius: 6px;
+            color: white;
+            font-size: 26px; /* 🔥 BIG TEXT = 1080p readable */
+            line-height: 1.4;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+            opacity: 0;
+            transform: translateX(50px);
+            width: fit-content;       /* fill container */
+            max-width: 40vw;   /* keeps margin feel */
+            min-height: 70px;  /* forces chunkier messages */
+        }
+
+        /* USER HEADER ROW */
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+
+            margin-bottom: 6px;
+        }
+
+        /* USERNAME */
+        .username {
+            font-weight: bold;
+            font-size: 22px;
+            text-shadow: 1px 1px 2px black;
+        }
+
+        /* MESSAGE TEXT */
+        .message-content {
+            word-wrap: break-word;
+            line-height: 1.4;
+            color: #efeff1;
+
+            font-size: 26px;
+        }
+
+        /* BADGES */
+        .badge {
+            width: 26px;
+            height: 26px;
+        }
+
+        /* EMOTES */
+        .emote {
+            vertical-align: middle;
+            height: 1.2em;
+            margin: -0.2em 0.1em 0.1em;
+        }
+    </style>
+</head>
+<body>
+    <div id="status" class="show">CHAT OVERLAY: NOT CONNECTED</div>
+    <div id="chat-container"></div>
+
+    <script src="script.js"></script>
+    <script>
+        const container = document.getElementById('chat-container');
+
+        // Connect to the overlay relay served by the WebUI (same host/port as this page).
+        const relayUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + (location.host || '127.0.0.1:8766');
+
+        // Initialize shared WebSocket client
+        const wsClient = new OverlayWebSocketClient(relayUrl, 'status', 'CHAT');
+        wsClient.registerHandler('chat_msg', addMessage);
+        wsClient.connect();
+
+        function addMessage(data) {
+            console.log("BADGES FROM SERVER:", data.badges);
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'message-box';
+            msgDiv.style.borderLeftColor = data.color || '#00FF7F';
+
+            // data.badges is now a list of full CDN URLs provided by the bot
+            const badgesHtml = (data.badges || [])
+                .map(url => `
+                        <img
+                            class="badge"
+                            src="${url}"
+                            onload="console.log('Badge loaded:', this.src)"
+                            onerror="console.error('Badge failed:', this.src)"
+                        >
+                    `)
+                .join('');
+
+            msgDiv.innerHTML = `
+                <div class="user-info">
+                    ${badgesHtml}
+                    <span class="username" style="color: ${data.color}">${data.user}</span>
+                </div>
+                <div class="message-content">${data.message}</div>
+            `;
+
+            container.appendChild(msgDiv);
+
+            while (container.children.length > 5) {
+                container.removeChild(container.firstElementChild);
+            }
+
+            // Animation In
+            anime({
+                targets: msgDiv,
+                translateX: [50, 0],
+                opacity: [0, 1],
+                duration: 500,
+                easing: 'easeOutElastic(1, .8)'
+            });
+
+            // Animation Out after 10 seconds
+            setTimeout(() => {
+                anime({
+                    targets: msgDiv,
+                    translateX: -50,
+                    opacity: 0,
+                    duration: 500,
+                    easing: 'easeInQuad',
+                    complete: () => {
+                        msgDiv.remove();
+                    }
+                });
+            }, 10000);
+        }
+
+        console.log("Chat Overlay Initialized...");
+    </script>
+</body>
+</html>

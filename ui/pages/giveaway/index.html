@@ -1,0 +1,293 @@
+<section class="giveaway-shell" id="giveaway-view">
+
+  <!-- <p class="giveaway-shell__description">
+    A dedicated control center for managing entries, giveaway states, and winner selection.
+  </p> -->
+
+  <div class="giveaway-stats">
+    <div class="stat-pill">
+      <strong id="giveaway-entries-count">0</strong>
+      <span>Entries</span>
+    </div>
+
+    <div class="stat-pill">
+      <strong id="giveaway-unique-count">0</strong>
+      <span>Unique</span>
+    </div>
+
+    <div class="stat-pill">
+      <strong id="giveaway-runtime">00:00</strong>
+      <span>Runtime</span>
+    </div>
+
+    <div class="stat-pill">
+      <strong id="giveaway-status">Ready</strong>
+      <span>Status</span>
+    </div>
+
+    <div class="stat-pill">
+      <strong id="giveaway-winners-count">0</strong>
+      <span>Winners</span>
+    </div>
+  </div>
+
+  <div class="scheduler-stats scheduler-feature">
+    <div class="scheduler-stats__header">
+      <span>Scheduler</span>
+    </div>
+
+    <div class="scheduler-stats__pills">
+      <div class="stat-pill">
+        <strong id="scheduler-state">IDLE</strong>
+        <span>State</span>
+      </div>
+
+      <div class="stat-pill">
+        <strong id="scheduler-loop">#0</strong>
+        <span>Loop</span>
+      </div>
+
+      <div class="stat-pill">
+        <strong id="scheduler-completed">0</strong>
+        <span>Completed</span>
+      </div>
+
+      <div class="stat-pill">
+        <strong id="scheduler-runtime">00:00</strong>
+        <span>Runtime</span>
+      </div>
+
+      <div class="stat-pill">
+        <strong id="scheduler-mode">—</strong>
+        <span>Mode</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="giveaway-steps">
+    <span id="step-idle" class="step-pill">IDLE</span>
+    <span id="step-started" class="step-pill">STARTED</span>
+
+    <span class="step-separator">|</span>
+
+    <span id="step-running" class="step-pill">RUNNING</span>
+    <span id="step-rolling" class="step-pill">ROLLING</span>
+
+    <span class="step-separator">|</span>
+
+    <span id="step-winner" class="step-pill">WINNER</span>
+  </div>
+
+  <div class="giveaway-title-row">
+    <label for="giveaway-title">Title</label>
+    <input id="giveaway-title" type="text" placeholder="Enter Giveaway Title..." />
+    <label for="giveaway-reward">Reward</label>
+    <span class="giveaway-select-wrap">
+      <select id="giveaway-reward">
+        <option value="Monthly Pass">Monthly Pass</option>
+        <option value="Battle Pass">Battle Pass</option>
+      </select>
+    </span>
+  </div>
+
+  <div class="giveaway-grid">
+
+    <div class="giveaway-left">
+    <!-- Controls -->
+    <div class="panel-card controls-card">
+      <div class="panel-card__header">
+        <div>
+          <p class="panel-label">Controls</p>
+          <h4>Main action</h4>
+        </div>
+
+        <div class="giveaway-controls-actions">
+          <button class="primary-button scheduler-button scheduler-feature" type="button" id="giveaway-scheduler-action">
+            Start Scheduler
+          </button>
+
+          <button class="ghost-button button-danger giveaway-reset-small" type="button" id="giveaway-reset">
+            Reset
+          </button>
+
+          <button class="ghost-button giveaway-settings-toggle" type="button" id="giveaway-settings-toggle" title="Giveaway settings" aria-label="Open giveaway settings">
+            ⚙
+          </button>
+        </div>
+      </div>
+
+      <div class="button-stack">
+        <button class="primary-button" type="button" id="giveaway-main-action">
+          Start Giveaway
+        </button>
+
+        <button class="primary-button hidden" type="button" id="giveaway-finish-action">
+          Finish Giveaway
+        </button>
+      </div>
+
+      <p class="muted-copy" id="giveaway-state-copy">
+        The next action will be shown here as the giveaway changes state.
+      </p>
+    </div>
+
+    <!-- Winners -->
+    <div class="panel-card winners-card">
+      <div class="panel-card__header">
+        <div>
+          <p class="panel-label">Winners</p>
+          <h4>Recent winners</h4>
+        </div>
+      </div>
+    
+      <div class="table-scroll">
+        <table class="giveaway-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Claim</th>
+            </tr>
+          </thead>
+    
+          <tbody id="giveaway-winners-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+
+  </div>
+
+    <!-- Activity -->
+    <div class="panel-card activity-card">
+      <div class="panel-card__header">
+        <div>
+          <p class="panel-label">Activity log</p>
+          <h4>Recent events</h4>
+        </div>
+      </div>
+
+      <ul class="activity-log" id="giveaway-activity-log"></ul>
+    </div>
+
+
+    <!-- Entrants -->
+    <div class="panel-card entrants-card">
+      <div class="panel-card__header">
+        <div>
+          <p class="panel-label">Entrants</p>
+          <h4>Current entries</h4>
+        </div>
+      </div>
+
+      <div class="table-scroll">
+        <table class="giveaway-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Weight</th>
+              <th>Odds</th>
+            </tr>
+          </thead>
+
+          <tbody id="giveaway-entries-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+
+  </div>
+  </div>
+</section>
+
+<section class="giveaway-shell giveaway-shell--history hidden" id="giveaway-history-view">
+
+  <div class="panel-card">
+    <div class="panel-card__header">
+      <div>
+        <p class="panel-label">Records</p>
+        <h4>Saved runs</h4>
+      </div>
+      <button class="primary-button" type="button" id="giveaway-history-recover" disabled>
+        Recover
+      </button>
+    </div>
+    <div class="history-layout">
+      <div class="history-list-wrap">
+        <p class="history-empty hidden" id="giveaway-history-empty">No saved runs yet.</p>
+        <div class="history-list" id="giveaway-history-list"></div>
+      </div>
+      <div class="history-preview" id="giveaway-history-preview">
+        <p class="history-preview__empty">
+          Select a saved run to view its winner selection and entry data.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div id="giveaway-roll-modal" class="giveaway-modal hidden">
+    <div class="giveaway-modal__card">
+        <h3>Roll Winner</h3>
+
+        <p id="giveaway-roll-message">
+            Are you sure you want to roll winner #1?
+        </p>
+
+        <div class="giveaway-modal__actions">
+            <button id="giveaway-roll-cancel" class="ghost-button">
+                Cancel
+            </button>
+
+            <button id="giveaway-roll-confirm" class="primary-button">
+                Roll Winner
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="giveaway-scheduler-modal" class="giveaway-modal-overlay hidden" role="dialog" aria-modal="true"
+  aria-labelledby="giveaway-scheduler-title">
+  <div class="giveaway-modal giveaway-modal--settings giveaway-modal--scheduler">
+    <div class="giveaway-modal__header">
+      <p class="panel-label">Scheduler</p>
+      <h3 id="giveaway-scheduler-title">Start Scheduler?</h3>
+    </div>
+
+    <div class="giveaway-modal__body">
+      <p>Are you sure you want to start the scheduler with these settings?</p>
+      <div id="giveaway-scheduler-summary"></div>
+    </div>
+
+    <div class="giveaway-modal__footer">
+      <button id="giveaway-scheduler-cancel" class="ghost-button" type="button">Cancel</button>
+      <button id="giveaway-scheduler-confirm" class="primary-button" type="button">Start Scheduler</button>
+    </div>
+  </div>
+</div>
+
+<div id="giveaway-settings-modal" class="giveaway-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="giveaway-settings-title">
+    <div class="giveaway-modal giveaway-modal--settings">
+        <div class="giveaway-modal__header">
+            <p class="panel-label">Settings</p>
+            <h3 id="giveaway-settings-title">Giveaway settings</h3>
+        </div>
+
+        <div class="giveaway-modal__body">
+            <div id="giveaway-settings-fields" class="giveaway-settings-fields">
+                Giveaway settings will render here.
+            </div>
+        </div>
+
+        <div class="giveaway-modal__footer">
+            <button id="giveaway-settings-close" class="ghost-button" type="button">
+                Close
+            </button>
+
+            <button id="giveaway-settings-save" class="primary-button" type="button">
+                Save
+            </button>
+        </div>
+    </div>
+</div>
+
+<script src="script.js"></script>

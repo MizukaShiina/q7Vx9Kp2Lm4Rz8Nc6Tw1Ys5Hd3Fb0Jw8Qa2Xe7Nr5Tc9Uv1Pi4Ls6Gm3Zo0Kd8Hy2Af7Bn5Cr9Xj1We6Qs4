@@ -1,0 +1,163 @@
+<section class="page-card ovc-shell">
+
+  <div class="page-card__header">
+    <div>
+      <p class="panel-label">System status</p>
+      <h3>Overview</h3>
+    </div>
+    <div class="pill-group">
+      <span class="pill pill--accent">Connected</span>
+      <span class="pill">Updated now</span>
+    </div>
+  </div>
+
+  <p class="page-card__description">
+    Status of literally everything — a cockpit for the bot, its services, and the connected systems. These chips are static placeholders for now (no live data wired in).
+  </p>
+
+  <!-- Warnings strip (placeholder; database issues are live) -->
+  <div class="ovc-warnings" id="ovc-warnings">
+    <span class="ovc-warnings__label" id="ovc-warnings-label">Attention</span>
+    <span class="ovc-warnings__text" id="ovc-warnings-text">Waiting for database state…</span>
+  </div>
+
+  <div class="ovc-status">
+
+    <!-- Database — LIVE: verified against EXPECTED_TABLES in script.js -->
+    <div class="ovc-chip ovc-chip--ok" id="ovc-db" data-chip="database">
+      <div class="ovc-chip__head">
+        <span class="ovc-chip__icon">🗄</span>
+        <span class="ovc-chip__name">Database</span>
+        <span class="ovc-chip__badge ovc-chip__badge--ok">Ok</span>
+      </div>
+      <div class="ovc-chip__meta" id="ovc-db-meta">Waiting for state…</div>
+      <div class="ovc-chip__foot">
+        <button class="ovc-chip__check" type="button">Check</button>
+        <span class="ovc-chip__time" id="ovc-db-time">—</span>
+      </div>
+    </div>
+
+    <div class="ovc-chip ovc-chip--ok">
+      <div class="ovc-chip__head">
+        <span class="ovc-chip__icon">💬</span>
+        <span class="ovc-chip__name">IRC</span>
+        <span class="ovc-chip__badge ovc-chip__badge--ok">Live</span>
+      </div>
+      <div class="ovc-chip__meta">
+        <span>Connected · #mizuka</span>
+      </div>
+      <div class="ovc-chip__foot">
+        <button class="ovc-chip__check" type="button">Check</button>
+        <span class="ovc-chip__time">just now</span>
+      </div>
+    </div>
+
+    <div class="ovc-chip ovc-chip--off" id="ovc-discord" data-chip="discord">
+      <div class="ovc-chip__head">
+        <span class="ovc-chip__icon">🟦</span>
+        <span class="ovc-chip__name">Discord</span>
+        <span class="ovc-chip__badge ovc-chip__badge--off">Idle</span>
+      </div>
+      <div class="ovc-chip__meta" id="ovc-discord-meta">Waiting for state…</div>
+      <div class="ovc-chip__foot">
+        <button class="ovc-chip__check" type="button">Check</button>
+        <span class="ovc-chip__time" id="ovc-discord-time">—</span>
+      </div>
+    </div>
+
+    <div class="ovc-chip ovc-chip--ok">
+      <div class="ovc-chip__head">
+        <span class="ovc-chip__icon">🎬</span>
+        <span class="ovc-chip__name">OBS</span>
+        <span class="ovc-chip__badge ovc-chip__badge--ok">Live</span>
+      </div>
+      <div class="ovc-chip__meta">
+        <span>Scene A · 720p60</span>
+      </div>
+      <div class="ovc-chip__foot">
+        <button class="ovc-chip__check" type="button">Check</button>
+        <span class="ovc-chip__time">just now</span>
+      </div>
+    </div>
+
+    <!-- Configured but unverified example -->
+    <div class="ovc-chip ovc-chip--warn">
+      <div class="ovc-chip__head">
+        <span class="ovc-chip__icon">🔑</span>
+        <span class="ovc-chip__name">Credentials</span>
+        <span class="ovc-chip__badge ovc-chip__badge--warn">Unverified</span>
+      </div>
+      <div class="ovc-chip__meta">
+        <span>Twitch set</span><span>·</span><span>OBS set</span><span>·</span><span>Dropbox —</span>
+      </div>
+      <div class="ovc-chip__foot">
+        <button class="ovc-chip__check" type="button">Check</button>
+        <span class="ovc-chip__time">never</span>
+      </div>
+    </div>
+
+    <div class="ovc-chip ovc-chip--warn">
+      <div class="ovc-chip__head">
+        <span class="ovc-chip__icon">☁️</span>
+        <span class="ovc-chip__name">Dropbox</span>
+        <span class="ovc-chip__badge ovc-chip__badge--warn">Unverified</span>
+      </div>
+      <div class="ovc-chip__meta">
+        <span>Last backup 2h ago</span>
+      </div>
+      <div class="ovc-chip__foot">
+        <button class="ovc-chip__check" type="button">Check</button>
+        <span class="ovc-chip__time">2h ago</span>
+      </div>
+    </div>
+
+    <div class="ovc-chip ovc-chip--ok">
+      <div class="ovc-chip__head">
+        <span class="ovc-chip__icon">⚙️</span>
+        <span class="ovc-chip__name">Config</span>
+        <span class="ovc-chip__badge ovc-chip__badge--ok">Loaded</span>
+      </div>
+      <div class="ovc-chip__meta">
+        <span>24 options · no conflicts</span>
+      </div>
+      <div class="ovc-chip__foot">
+        <button class="ovc-chip__check" type="button">Check</button>
+        <span class="ovc-chip__time">5 min ago</span>
+      </div>
+    </div>
+
+    <!-- Not configured example -->
+    <div class="ovc-chip ovc-chip--off">
+      <div class="ovc-chip__head">
+        <span class="ovc-chip__icon">🖼</span>
+        <span class="ovc-chip__name">Overlay</span>
+        <span class="ovc-chip__badge ovc-chip__badge--off">Off</span>
+      </div>
+      <div class="ovc-chip__meta">
+        <span>— Not configured —</span>
+      </div>
+      <div class="ovc-chip__foot">
+        <button class="ovc-chip__check" type="button">Check</button>
+        <span class="ovc-chip__time">—</span>
+      </div>
+    </div>
+
+    <!-- Severely broken example -->
+    <div class="ovc-chip ovc-chip--err">
+      <div class="ovc-chip__head">
+        <span class="ovc-chip__icon">📡</span>
+        <span class="ovc-chip__name">Gateway</span>
+        <span class="ovc-chip__badge ovc-chip__badge--err">Error</span>
+      </div>
+      <div class="ovc-chip__meta">
+        <span>State stale · 12s</span>
+      </div>
+      <div class="ovc-chip__foot">
+        <button class="ovc-chip__check" type="button">Check</button>
+        <span class="ovc-chip__time">12s ago</span>
+      </div>
+    </div>
+
+  </div>
+
+</section>

@@ -1,0 +1,67 @@
+<section class="page-card test-shell">
+
+  <div class="page-card__header">
+    <div>
+      <p class="panel-label">Overlay relay test bench</p>
+      <h3>Overlay Test</h3>
+    </div>
+    <div class="pill-group">
+      <span class="pill pill--accent" id="ot-relay-pill" data-state="unknown">Relay: ?</span>
+    </div>
+  </div>
+
+  <p class="page-card__description">
+    Fire fake overlay events straight into the local relay (the same pipe the bot's
+    <code>overlay_signal</code> packets use). Every connected overlay receives them at once —
+    no bot connection needed.
+  </p>
+
+  <div class="ot-status" id="ot-status" data-state="unknown">
+    <span class="ot-status__label">Relay</span>
+    <span class="ot-status__value" id="ot-status-value">Checking…</span>
+  </div>
+
+  <!-- Offline / browser-mode notice -->
+  <div class="ot-notice" id="ot-notice" hidden>
+    Not running inside Electron — events can't be relayed to overlays from here.
+  </div>
+
+  <div class="ot-controls">
+
+    <label class="ot-field">
+      <span class="ot-field__label">Event type</span>
+      <select id="ot-event">
+        <option value="raid">Raid</option>
+        <option value="follow">Follow</option>
+        <option value="sub">Sub</option>
+        <option value="gift_sub">Gift Sub</option>
+        <option value="shoutout">Shoutout</option>
+        <option value="chat_msg">Chat Message</option>
+      </select>
+    </label>
+
+    <button class="ot-btn ot-btn--primary" id="ot-test" type="button">Test — send once</button>
+  </div>
+
+  <div class="ot-controls ot-controls--loop">
+
+    <label class="ot-field ot-field--inline">
+      <span class="ot-field__label">Loop every</span>
+      <input id="ot-interval" type="number" min="1" max="60" value="3" step="1" />
+      <span class="ot-field__suffix">seconds</span>
+    </label>
+
+    <button class="ot-btn ot-btn--danger" id="ot-loop" type="button" data-running="false">Test Loop — burst all to every overlay</button>
+  </div>
+
+  <div class="ot-stats">
+    <div class="ot-stat"><span class="ot-stat__num" id="ot-count">0</span><span class="ot-stat__label">events sent</span></div>
+    <div class="ot-stat"><span class="ot-stat__num" id="ot-clients">0</span><span class="ot-stat__label">overlays connected</span></div>
+    <div class="ot-stat"><span class="ot-stat__num" id="ot-blasts">0</span><span class="ot-stat__label">bursts sent</span></div>
+  </div>
+
+  <div class="ot-feed" id="ot-feed">
+    <div class="ot-feed__empty">Nothing sent yet. Hit <b>Test</b> or start the loop.</div>
+  </div>
+
+</section>

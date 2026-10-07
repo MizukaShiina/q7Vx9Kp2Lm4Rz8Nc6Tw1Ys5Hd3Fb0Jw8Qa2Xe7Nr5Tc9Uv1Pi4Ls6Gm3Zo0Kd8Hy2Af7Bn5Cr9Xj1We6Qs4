@@ -1,0 +1,89 @@
+<section class="config-page" id="config-view">
+
+  <div class="cfg-card">
+    <div class="cfg-card__header">
+      <div>
+        <p class="panel-label">Twitch</p>
+        <h4>Twitch settings</h4>
+      </div>
+    </div>
+    <div class="cfg-fields" id="config-twitch-fields"></div>
+  </div>
+
+  <div class="cfg-card">
+    <div class="cfg-card__header">
+      <div>
+        <p class="panel-label">Discord</p>
+        <h4>Discord channel settings</h4>
+      </div>
+    </div>
+    <div class="cfg-fields" id="config-discord-fields"></div>
+  </div>
+
+  <div class="cfg-card">
+    <div class="cfg-card__header">
+      <div>
+        <p class="panel-label">Loyalty</p>
+        <h4>Loyalty settings</h4>
+      </div>
+    </div>
+    <div class="cfg-fields" id="config-loyalty-fields"></div>
+  </div>
+
+  <div class="cfg-card">
+    <div class="cfg-card__header">
+      <div>
+        <p class="panel-label">Bot</p>
+        <h4>Bot settings</h4>
+      </div>
+    </div>
+    <div class="cfg-fields" id="config-settings-fields"></div>
+  </div>
+
+
+  <div class="cfg-card">
+    <div class="cfg-card__header">
+      <div>
+        <p class="panel-label">Database</p>
+        <h4>Database connections</h4>
+      </div>
+    </div>
+    <div class="cfg-fields" id="config-database-fields">
+      <div class="cfg-subgroup" data-subgroup="local">
+        <div class="cfg-subgroup__header">
+          <span class="cfg-subgroup__dot"></span>
+          <span class="cfg-subgroup__title">Local</span>
+        </div>
+        <div class="cfg-subgroup__fields" id="config-database-local-fields"></div>
+      </div>
+      <div class="cfg-subgroup" data-subgroup="cloud">
+        <div class="cfg-subgroup__header">
+          <span class="cfg-subgroup__dot"></span>
+          <span class="cfg-subgroup__title">Cloud</span>
+        </div>
+        <div class="cfg-subgroup__fields" id="config-database-cloud-fields"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- <p class="cfg-empty hidden" id="config-empty">
+    Connect to the bot server to load the configuration.
+  </p> -->
+
+  <div class="cfg-modal-overlay hidden" id="config-timezone-modal" role="dialog" aria-modal="true" aria-labelledby="config-timezone-title">
+    <div class="cfg-modal">
+      <div class="cfg-modal__header">
+        <div>
+          <p class="panel-label">Bot settings</p>
+          <h3 id="config-timezone-title">Choose a timezone</h3>
+        </div>
+        <button class="cfg-modal__close" id="config-timezone-close" type="button" aria-label="Close timezone picker">&times;</button>
+      </div>
+      <div class="cfg-modal__body">
+        <input class="cfg-input" id="config-timezone-search" type="search" placeholder="Search cities or regions" autocomplete="off">
+        <div class="cfg-timezone-list" id="config-timezone-list" role="listbox" aria-label="Available timezones"></div>
+      </div>
+    </div>
+  </div>
+
+</section>

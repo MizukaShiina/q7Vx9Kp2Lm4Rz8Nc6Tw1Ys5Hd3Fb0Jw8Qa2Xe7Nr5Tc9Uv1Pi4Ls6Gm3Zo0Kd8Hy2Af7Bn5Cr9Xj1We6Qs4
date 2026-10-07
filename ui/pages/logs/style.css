@@ -1,0 +1,232 @@
+/* Logs page - diagnostics / event feed viewer.
+   Two log streams, rendered from server snapshot state:
+     - system: "YYYY-MM-DD HH:MM:SS [LEVEL] message"
+     - chat:   "[OFFLINE] HH:MM:SS YYYY-MM-DD HH:MM:SS user: message"
+   Styling follows the dashboard design tokens (--accent, --muted, ...). */
+
+.logs-metrics {
+  margin-top: 12px;
+}
+
+/* --- Tab bar --- */
+.logs-tabs {
+  display: flex;
+  gap: 4px;
+  margin-top: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.logs-tab {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  padding: 8px 12px;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 140ms ease, border-color 140ms ease;
+}
+
+.logs-tab:hover {
+  color: var(--text);
+}
+
+.logs-tab.is-active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.logs-tab--issues {
+  color: #d97706;
+}
+
+.logs-tab--issues.is-active {
+  color: #fbbf24;
+  border-bottom-color: #fbbf24;
+}
+
+/* --- Log viewport --- */
+.logs-view {
+  position: relative;
+  margin-top: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.22);
+  overflow: hidden;
+}
+
+.logs-output {
+  height: 300px;
+  max-height: 55vh;
+  overflow: auto;
+  padding: 8px 10px;
+  font-family: ui-monospace, "Cascadia Mono", Consolas, "Courier New", monospace;
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: #d9dbea;
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.logs-output:hover {
+  scrollbar-color: rgba(255, 255, 255, 0.2) rgba(255, 255, 255, 0.05);
+}
+
+.logs-output::-webkit-scrollbar {
+  width: 6px;
+}
+
+.logs-output::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.logs-output::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 3px;
+}
+
+.logs-output:hover::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.logs-output:hover::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.logs-output:focus-visible {
+  outline: 1px solid rgba(0, 242, 255, 0.4);
+  outline-offset: -1px;
+}
+
+/* --- A single log line --- */
+.log-line {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  padding: 1px 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.log-line__time {
+  flex: 0 0 auto;
+  color: #5f6b85;
+  font-variant-numeric: tabular-nums;
+}
+
+.log-line__tag {
+  flex: 0 0 auto;
+  color: var(--muted);
+}
+
+.log-line__level {
+  flex: 0 0 auto;
+  min-width: 52px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.log-line__from {
+  flex: 0 0 auto;
+  font-weight: 700;
+  color: #a8b3cc;
+}
+
+.log-line__from--bot {
+  color: var(--accent);
+}
+
+.log-line__msg {
+  color: #d9dbea;
+}
+
+/* Bot replies get a subtle accent edge so they stand out in chat. */
+.log-line--bot {
+  border-left: 2px solid rgba(0, 242, 255, 0.35);
+  padding-left: 8px;
+  background: rgba(0, 242, 255, 0.04);
+  border-radius: 0 6px 6px 0;
+}
+
+/* --- System level colours --- */
+.log-level--trace,
+.log-level--debug {
+  color: #7c88a0;
+}
+
+.log-level--info {
+  color: #c6cede;
+}
+
+.log-level--notice {
+  color: #8fb9ff;
+}
+
+.log-level--success {
+  color: var(--success);
+}
+
+.log-level--warning {
+  color: #fbbf24;
+}
+
+.log-level--error {
+  color: #f87171;
+}
+
+.log-level--critical {
+  color: #ff5c5c;
+}
+
+/* --- Jump-to-latest chip (appears when the user scrolls up) --- */
+.logs-jump {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  padding: 6px 12px;
+  border: 1px solid rgba(0, 242, 255, 0.24);
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(0, 242, 255, 0.16), rgba(255, 255, 255, 0.06));
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  transition: background 140ms ease, border-color 140ms ease;
+}
+
+.logs-jump:hover {
+  background: rgba(0, 242, 255, 0.18);
+  border-color: rgba(0, 242, 255, 0.4);
+}
+
+/* --- Header pill states + copy button --- */
+.logs-live-pill--wait {
+  color: #fbbf24;
+  border-color: rgba(251, 191, 36, 0.24);
+  background: rgba(251, 191, 36, 0.08);
+}
+
+.pill--button {
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
+}
+
+.pill--button:hover {
+  color: var(--accent);
+  border-color: rgba(0, 242, 255, 0.24);
+  background: rgba(0, 242, 255, 0.1);
+}
+
+.logs-empty {
+  padding: 28px 12px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.8rem;
+}

@@ -1,0 +1,169 @@
+/* Overview page - "status of everything" chip mockup.
+   Pure UI placeholders for now: no live state, no bridge calls.
+   Each .ovc-chip carries one of four states via --chip-accent:
+     ok   = verified / live          (cyan)
+     warn = configured, unverified   (amber)
+     off  = not configured / off     (muted)
+     err  = verified failure          (red) */
+.ovc-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Attention strip */
+.ovc-warnings {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 9px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(251, 191, 36, 0.28);
+  background: rgba(251, 191, 36, 0.08);
+  font-size: 0.8rem;
+  color: var(--text);
+}
+
+.ovc-warnings__label {
+  text-transform: uppercase;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--accent);
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.ovc-warnings__text code {
+  font-family: inherit;
+  color: var(--accent);
+  background: rgba(0, 242, 255, 0.08);
+  border: 1px solid rgba(0, 242, 255, 0.14);
+  border-radius: 5px;
+  padding: 0 5px;
+}
+
+/* Warnings strip in its healthy state */
+.ovc-warnings--ok {
+  border-color: rgba(0, 242, 255, 0.22);
+  background: rgba(0, 242, 255, 0.06);
+}
+
+.ovc-warnings--ok .ovc-warnings__label {
+  color: var(--accent);
+  border-color: rgba(0, 242, 255, 0.18);
+  background: rgba(0, 242, 255, 0.08);
+}
+
+/* Chip grid */
+.ovc-status {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  align-items: start;
+  gap: 12px;
+}
+
+/* Chip card */
+.ovc-chip {
+  --chip-accent: var(--accent);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.ovc-chip--ok {
+  --chip-accent: #00f2ff;
+  border-color: rgba(0, 242, 255, 0.18);
+}
+
+.ovc-chip--warn {
+  --chip-accent: #fbbf24;
+  border-color: rgba(251, 191, 36, 0.18);
+}
+
+.ovc-chip--off {
+  --chip-accent: rgba(255, 255, 255, 0.35);
+}
+
+.ovc-chip--err {
+  --chip-accent: #ef4444;
+  border-color: rgba(239, 68, 68, 0.22);
+}
+
+.ovc-chip__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ovc-chip__icon {
+  font-size: 1.1rem;
+}
+
+.ovc-chip__name {
+  font-weight: 600;
+}
+
+.ovc-chip__badge {
+  margin-left: auto;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: var(--chip-accent);
+  color: #0c0e14;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.ovc-chip__badge--ok,
+.ovc-chip__badge--warn,
+.ovc-chip__badge--err {
+  color: #0c0e14;
+}
+
+.ovc-chip__badge--off {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--text);
+}
+
+.ovc-chip__meta {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.ovc-chip__meta > span:not(:last-child)::after {
+  content: "  ";
+}
+
+.ovc-chip__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ovc-chip__check {
+  padding: 0.35rem 0.8rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.75rem;
+}
+
+.ovc-chip__check:hover {
+  border-color: var(--chip-accent);
+  color: var(--chip-accent);
+}
+
+.ovc-chip__time {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}

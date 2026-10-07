@@ -1,0 +1,39 @@
+<section class="page-shell">
+  <p class="page-shell__description">Review the bot's command library — triggers, permissions, and descriptions synced from the server.</p>
+
+  <div class="panel-card">
+    <div class="panel-card__header">
+      <div>
+        <p class="panel-label">Command library</p>
+        <h4>Available presets</h4>
+      </div>
+      <span class="status-chip" id="commands-count">Live</span>
+    </div>
+
+    <div class="commands-table" id="commands-table">
+      <div class="commands-table__header">
+        <span class="commands-col commands-col--key">Command Key</span>
+        <span class="commands-col commands-col--trigger">Command</span>
+        <span class="commands-col commands-col--perms">Permissions</span>
+        <span class="commands-col commands-col--about">About</span>
+      </div>
+      <div class="commands-table__body" id="commands-list">
+        <p class="commands-empty">Waiting for command data…</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="commands-modal-overlay hidden" id="commands-perm-modal">
+  <div class="commands-modal">
+    <div class="commands-modal__header">
+      <p class="panel-label">Permissions</p>
+      <h4 id="commands-perm-title">Edit permissions</h4>
+    </div>
+    <div class="commands-modal__body" id="commands-perm-checkboxes"></div>
+    <div class="commands-modal__footer">
+      <button class="ghost-button" id="commands-perm-cancel" type="button">Cancel</button>
+      <button class="primary-button" id="commands-perm-save" type="button">Save</button>
+    </div>
+  </div>
+</div>

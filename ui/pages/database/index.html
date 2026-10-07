@@ -1,0 +1,72 @@
+<section class="database-shell">
+  <div class="database-overview">
+    <div>
+      <p class="panel-label">Database</p>
+      <h3>Stored data</h3>
+      <p class="database-description">Browse and edit the live database — writes go straight to Postgres from the Electron app.</p>
+    </div>
+    <div class="database-status" id="database-status">Waiting for snapshot</div>
+  </div>
+
+  <div class="database-metrics" aria-label="Database summary">
+    <div class="database-metric"><strong id="database-count">0</strong><span>Databases</span></div>
+    <div class="database-metric"><strong id="database-table-count">0</strong><span>Tables</span></div>
+    <div class="database-metric"><strong id="database-row-count">0</strong><span>Visible rows</span></div>
+  </div>
+
+  <div class="database-workspace">
+    <aside class="database-sidebar panel-card">
+      <div class="panel-card__header">
+        <div>
+          <p class="panel-label">Sources</p>
+          <h4>Tables</h4>
+        </div>
+        <div class="database-toolbar" id="database-table-toolbar" hidden>
+          <button class="database-tool-button" id="database-new-table" type="button" title="Create a new table">＋</button>
+          <button class="database-tool-button database-tool-button--danger" id="database-drop-table" type="button" title="Drop the selected table" disabled>🗑</button>
+        </div>
+      </div>
+      <div class="database-table-list" id="database-table-list">
+        <div class="database-empty">No database snapshot yet.</div>
+      </div>
+    </aside>
+
+    <section class="database-content panel-card">
+      <div class="panel-card__header database-content__header">
+        <div>
+          <p class="panel-label" id="database-selected-database">Database</p>
+          <h4 id="database-selected-table">Select a table</h4>
+        </div>
+        <div class="database-header-tools">
+          <div class="database-toolbar" id="database-row-toolbar" hidden>
+            <button class="database-tool-button" id="database-add-row" type="button" title="Add a row">＋ Row</button>
+            <button class="database-tool-button database-tool-button--danger" id="database-delete-rows" type="button" title="Delete selected rows" disabled>🗑</button>
+            <button class="database-tool-button database-tool-button--primary" id="database-save-changes" type="button" title="Save changes" disabled>Save</button>
+            <button class="database-tool-button" id="database-discard-changes" type="button" title="Discard changes" disabled>Discard</button>
+          </div>
+          <label class="database-search">
+            <span class="sr-only">Search rows</span>
+            <input id="database-search" type="search" placeholder="Search rows..." />
+          </label>
+        </div>
+      </div>
+      <div class="database-feedback" id="database-feedback" hidden></div>
+      <div class="database-table-wrap" id="database-table-wrap">
+        <div class="database-empty">Select a table to inspect its snapshot.</div>
+      </div>
+    </section>
+  </div>
+
+  <div class="database-modal-overlay hidden" id="database-modal">
+    <div class="database-modal">
+      <div class="database-modal__header">
+        <h3 id="database-modal-title">Confirm</h3>
+      </div>
+      <div class="database-modal__body" id="database-modal-body"></div>
+      <div class="database-modal__footer">
+        <button class="ghost-button" id="database-modal-cancel">Cancel</button>
+        <button class="primary-button" id="database-modal-confirm">Confirm</button>
+      </div>
+    </div>
+  </div>
+</section>
