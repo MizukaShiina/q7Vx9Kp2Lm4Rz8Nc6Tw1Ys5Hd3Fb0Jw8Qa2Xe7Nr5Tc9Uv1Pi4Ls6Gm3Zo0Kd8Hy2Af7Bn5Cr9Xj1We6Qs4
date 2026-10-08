@@ -40,7 +40,7 @@ function createUpdateStatus() {
     window.electronAPI.retryUpdate()
       .catch((error) => {
         console.error('Unable to retry WebUI update:', error);
-        showError();
+        showError(error.message);
       })
       .finally(() => {
         retryButton.disabled = false;
@@ -66,8 +66,10 @@ function createUpdateStatus() {
     if (appRoot) appRoot.inert = false;
   }
 
-  function showError() {
-    message.textContent = 'The update could not be downloaded. Retry to check again.';
+  function showError(detail) {
+    message.textContent = detail
+      ? `The update failed: ${detail}`
+      : 'The update could not be downloaded. Retry to check again.';
     progress.hidden = true;
     retryButton.hidden = false;
     show();
@@ -118,7 +120,7 @@ function createUpdateStatus() {
         show();
         break;
       case 'error':
-        if (updateRequired) showError();
+        if (updateRequired) showError(status.message);
         break;
     }
   }
