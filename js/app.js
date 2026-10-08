@@ -79,6 +79,15 @@ async function loadView({ htmlPath, cssPath, jsPath, viewId }) {
   root.innerHTML = html;
   root.dataset.viewKey = key;
 
+  const versionElement = document.getElementById('app-version');
+  if (versionElement && window.electronAPI?.getVersion) {
+    window.electronAPI.getVersion()
+      .then((version) => {
+        if (versionElement.isConnected) versionElement.textContent = `v${version}`;
+      })
+      .catch((error) => console.error('Unable to load WebUI version:', error));
+  }
+
   if (appState.activeCss) {
     appState.activeCss.remove();
     appState.activeCss = null;

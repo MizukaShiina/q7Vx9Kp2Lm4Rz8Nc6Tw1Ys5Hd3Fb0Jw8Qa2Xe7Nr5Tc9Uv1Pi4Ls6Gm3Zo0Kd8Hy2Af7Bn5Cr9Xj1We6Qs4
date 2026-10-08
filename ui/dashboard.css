@@ -58,6 +58,21 @@
   min-width: 0;
 }
 
+.app-header__name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.app-header__version {
+  padding: 2px 5px;
+  border: 1px solid rgba(0, 242, 255, 0.2);
+  border-radius: 5px;
+  color: var(--accent);
+  font-size: 0.64rem;
+  line-height: 1.2;
+}
+
 .header-icon {
   display: grid;
   place-items: center;
