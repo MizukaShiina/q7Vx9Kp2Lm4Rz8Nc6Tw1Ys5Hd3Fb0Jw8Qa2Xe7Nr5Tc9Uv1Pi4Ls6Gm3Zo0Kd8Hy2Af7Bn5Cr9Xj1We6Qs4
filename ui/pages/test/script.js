@@ -13,6 +13,7 @@ const EVENT_TEMPLATES = {
   sub: { user: 'MockSub', months: 5 },
   gift_sub: { sender: 'MockGifter', recipient: 'MockRecipient' },
   shoutout: { user: 'MockStreamer', clip: null },
+  winner: { name: 'MizukaShiina', reward: 'Monthly Pass' },
   chat_msg: {
     user: 'MockChatter',
     message: 'Testing the overlay relay!',

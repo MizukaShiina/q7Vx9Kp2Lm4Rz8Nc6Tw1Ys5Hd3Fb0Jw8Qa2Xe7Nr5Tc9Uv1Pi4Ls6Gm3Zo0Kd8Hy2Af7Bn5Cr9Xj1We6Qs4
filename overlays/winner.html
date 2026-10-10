@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MizuBot Winner Overlay</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        body {
+            background: transparent;
+            color: #fff;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        #winner-video {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 200ms ease;
+        }
+
+        #winner-video.show {
+            opacity: 1;
+        }
+
+        #winner-content {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 5vh 8vw;
+            text-align: center;
+            opacity: 0;
+            pointer-events: none;
+
+            transform: translateY(30px);
+        }
+
+        #winner-content.show {
+            opacity: 1;
+        }
+
+        #winner-content.show #winner-name {
+            animation: winner-name-timeline 5s linear both;
+        }
+
+        #winner-content.show #winner-reward {
+            animation: winner-reward-timeline 5s linear both;
+        }
+
+        #winner-name {
+            max-width: 100%;
+            font-size: clamp(3rem, 10vw, 10rem);
+            font-weight: 900;
+            line-height: 1.05;
+            overflow-wrap: anywhere;
+            text-shadow:
+                0 4px 18px rgba(0, 0, 0, 0.85),
+                0 0 30px rgba(145, 70, 255, 0.8);
+        }
+
+        #winner-reward {
+            max-width: 100%;
+            margin-top: clamp(12px, 2vh, 28px);
+            font-size: clamp(1.5rem, 4vw, 4rem);
+            font-weight: 600;
+            line-height: 1.2;
+            overflow-wrap: anywhere;
+            color: #9146ff;
+            text-shadow:
+                0 3px 14px rgba(0, 0, 0, 0.9),
+                0 0 20px rgba(145, 70, 255, 0.65);
+        }
+
+        #status {
+            position: fixed;
+            right: 10px;
+            bottom: 10px;
+            padding: 8px 10px;
+            border-radius: 6px;
+            background: rgba(0, 0, 0, 0.7);
+            color: #ff4d4d;
+            font: 14px monospace;
+            display: none;
+        }
+
+        #status.show {
+            display: block;
+        }
+
+        @keyframes winner-name-timeline {
+            0% {
+                opacity: 0;
+                transform: translateX(100px);
+                animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+            }
+
+            50% {
+                opacity: 1;
+                transform: translateX(0);
+                animation-timing-function: cubic-bezier(0.7, 0, 0.84, 0);
+            }
+
+            100% {
+                opacity: 0;
+                transform: translateX(-100px);
+            }
+        }
+
+        @keyframes winner-reward-timeline {
+            0% {
+                opacity: 0;
+                transform: translateX(-100px);
+                animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+            }
+
+            50% {
+                opacity: 1;
+                transform: translateX(180px);
+                animation-timing-function: cubic-bezier(0.7, 0, 0.84, 0);
+            }
+
+            100% {
+                opacity: 0;
+                transform: translateX(280px);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <video id="winner-video" muted playsinline preload="auto">
+        <source src="winners.webm" type="video/webm">
+    </video>
+
+    <div id="status">WINNER OVERLAY: NOT CONNECTED</div>
+
+    <main id="winner-content" aria-live="polite">
+        <div id="winner-name"></div>
+        <div id="winner-reward"></div>
+    </main>
+
+    <script src="script.js"></script>
+    <script>
+        const winnerVideo = document.getElementById('winner-video');
+        const winnerContent = document.getElementById('winner-content');
+        const winnerName = document.getElementById('winner-name');
+        const winnerReward = document.getElementById('winner-reward');
+
+        const relayUrl =
+            (location.protocol === 'https:' ? 'wss://' : 'ws://') +
+            (location.host || '127.0.0.1:8766');
+
+        function hideWinner() {
+            winnerVideo.classList.remove('show');
+            winnerContent.classList.remove('show');
+        }
+
+        winnerVideo.addEventListener('ended', hideWinner);
+        winnerVideo.addEventListener('error', () => {
+            console.error('[Winner Overlay] Unable to load winners.webm:', winnerVideo.error);
+            hideWinner();
+        });
+
+        function handleWinnerDisplay(data) {
+            const name = typeof data?.name === 'string' ? data.name.trim() : '';
+            const reward = typeof data?.reward === 'string' ? data.reward.trim() : '';
+
+            if (!name || !reward) {
+                console.warn('[Winner Overlay] Ignoring event without a name and reward:', data);
+                return;
+            }
+
+            winnerName.textContent = name;
+            winnerReward.textContent = `for winning ${reward}`;
+
+            winnerVideo.pause();
+            winnerVideo.currentTime = 0;
+            winnerContent.classList.remove('show');
+            void winnerContent.offsetWidth;
+            winnerVideo.classList.add('show');
+            winnerContent.classList.add('show');
+
+            winnerVideo.play().catch((error) => {
+                console.error('[Winner Overlay] Unable to play winners.webm:', error);
+                hideWinner();
+            });
+        }
+
+        const wsClient = new OverlayWebSocketClient(relayUrl, 'status', 'WINNER');
+        wsClient.registerHandler('winner', handleWinnerDisplay);
+        wsClient.connect();
+    </script>
+</body>
+
+</html>
