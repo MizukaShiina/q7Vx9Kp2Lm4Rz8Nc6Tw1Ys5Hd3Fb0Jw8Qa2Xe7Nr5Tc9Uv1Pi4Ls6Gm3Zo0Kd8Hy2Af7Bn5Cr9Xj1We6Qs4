@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Chat Overlay — MizuBot</title>
+    <style>
+        * { box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; margin: 0; }
+        body { overflow: hidden; background: transparent; color: #fff; font-family: Inter, "Segoe UI", sans-serif; }
+        #status { position: fixed; right: 14px; bottom: 14px; z-index: 2; display: none; padding: 8px 12px; border: 1px solid #ff6b75; border-radius: 8px; background: #17131c; color: #ff8991; font: 12px monospace; }
+        #status.show { display: block; }
+        #chat-container { display: flex; flex-direction: column; justify-content: flex-end; gap: 12px; width: 100%; height: 100%; padding: 28px; }
+        .message-box {
+            position: relative; width: fit-content; max-width: min(620px, 54vw); min-width: 240px;
+            padding: 15px 19px 16px; overflow: hidden; border: 1px solid rgba(190, 161, 225, .26);
+            border-left: 4px solid var(--user-color, #9146ff); border-radius: 15px;
+            background: linear-gradient(110deg, rgba(20, 18, 27, .94), rgba(29, 22, 39, .91));
+            box-shadow: 0 8px 28px rgba(0, 0, 0, .27); opacity: 0; transform: translateX(-26px) scale(.98);
+            transition: opacity .6s ease, transform .7s cubic-bezier(.22, 1, .36, 1);
+            transition-delay: var(--entry-delay, 0ms);
+        }
+        .message-box.visible { opacity: 1; transform: translateX(0) scale(1); }
+        .message-box::after { position: absolute; top: 0; right: 0; width: 80px; height: 2px; background: linear-gradient(90deg, transparent, var(--user-color, #9146ff)); content: ""; opacity: .8; }
+        .message-box.leaving { opacity: 0; transform: translateX(-110%) scale(.97); transition: opacity .35s ease-in, transform .4s ease-in; transition-delay: 0ms; }
+        .user-info { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; margin-bottom: 5px; }
+        .username { color: var(--user-color, #c8a5ff); font-size: 18px; font-weight: 850; overflow-wrap: anywhere; }
+        .message-content { color: #f0edf3; font-size: 21px; line-height: 1.38; overflow-wrap: anywhere; }
+        .badge { width: 22px; height: 22px; object-fit: contain; }
+        .emote { height: 1.2em; margin: -.2em .1em .1em; vertical-align: middle; }
+        @media (max-width: 700px) { #chat-container { padding: 16px; } .message-box { max-width: 84vw; } .message-content { font-size: 18px; } }
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: .01ms !important; } }
+    </style>
+</head>
+<body>
+    <div id="status">CHAT OVERLAY: NOT CONNECTED</div>
+    <main id="chat-container" aria-live="polite"></main>
+    <script src="../script.js"></script>
+    <script>
+        const container = document.getElementById('chat-container');
+        const relayUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + (location.host || '127.0.0.1:8766');
+        const wsClient = new OverlayWebSocketClient(relayUrl, 'status', 'CHAT');
+        wsClient.registerHandler('chat_msg', addMessage);
+        wsClient.connect();
+
+        function dismissMessage(msgDiv) {
+            if (msgDiv.classList.contains('leaving')) return;
+            msgDiv.classList.add('leaving');
+            setTimeout(() => msgDiv.remove(), 400);
+        }
+
+        function addMessage(data) {
+            const activeMessages = [...container.children].filter((message) => !message.classList.contains('leaving'));
+            if (activeMessages.length >= 5) dismissMessage(activeMessages[0]);
+
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'message-box';
+            msgDiv.style.setProperty('--entry-delay', `${Math.min(activeMessages.length, 4) * 55}ms`);
+            msgDiv.style.setProperty('--user-color', data.color || '#9146ff');
+
+            const userInfo = document.createElement('div');
+            userInfo.className = 'user-info';
+            (data.badges || []).forEach((url) => {
+                const badge = document.createElement('img');
+                badge.className = 'badge';
+                badge.src = url;
+                badge.alt = '';
+                userInfo.appendChild(badge);
+            });
+            const username = document.createElement('span');
+            username.className = 'username';
+            username.textContent = data.user || 'Viewer';
+            userInfo.appendChild(username);
+
+            const message = document.createElement('div');
+            message.className = 'message-content';
+            message.innerHTML = data.message || '';
+            msgDiv.append(userInfo, message);
+            container.appendChild(msgDiv);
+            void msgDiv.offsetWidth;
+            msgDiv.classList.add('visible');
+
+            setTimeout(() => dismissMessage(msgDiv), 10000);
+        }
+    </script>
+</body>
+</html>

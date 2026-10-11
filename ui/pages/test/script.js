@@ -6,13 +6,21 @@
 // so in plain-browser mode the buttons degrade to a console log + notice.
 window.pageControllers = window.pageControllers || {};
 
+const TEST_SHOUTOUT_USER = 'drinst';
+const TEST_CLIP_CACHE_MS = 60 * 1000;
+let testShoutoutToken = null;
+let testShoutoutTokenExpiresAt = 0;
+let testShoutoutClipCache = null;
+let testShoutoutClipCacheExpiresAt = 0;
+let testShoutoutLookup = null;
+
 // Fake data shapes mirror exactly what the bot emits for each event type.
 const EVENT_TEMPLATES = {
   raid: { user: 'MockRaider', viewers: 42 },
   follow: { user: 'MockFollower' },
   sub: { user: 'MockSub', months: 5 },
   gift_sub: { sender: 'MockGifter', recipient: 'MockRecipient' },
-  shoutout: { user: 'MockStreamer', clip: null },
+  shoutout: { user: TEST_SHOUTOUT_USER, clip: null },
   winner: { name: 'MizukaShiina', reward: 'Monthly Pass' },
   chat_msg: {
     user: 'MockChatter',
@@ -44,6 +52,7 @@ window.pageControllers.test = function () {
   let loopRunning = false;
   let pollTimer = null;
   let pageActive = true;
+  let burstInProgress = false;
 
   // -------------------------------------------------------------------------
   // Status polling (visible page only)
@@ -90,9 +99,13 @@ window.pageControllers.test = function () {
     const time = new Date().toLocaleTimeString();
     const entry = document.createElement('div');
     entry.className = 'ot-feed__entry';
-    entry.innerHTML =
-      `<span class="ot-feed__time">${time}</span>` +
-      `<span class="ot-feed__event">${text}</span>`;
+    const timeLabel = document.createElement('span');
+    timeLabel.className = 'ot-feed__time';
+    timeLabel.textContent = time;
+    const eventLabel = document.createElement('span');
+    eventLabel.className = 'ot-feed__event';
+    eventLabel.textContent = text;
+    entry.append(timeLabel, eventLabel);
     // Remove the empty-state placeholder if present.
     const empty = els.feed.querySelector('.ot-feed__empty');
     if (empty) empty.remove();
@@ -132,23 +145,135 @@ window.pageControllers.test = function () {
     return true;
   }
 
-  // Burst = all event types, so every overlay receives something it handles.
-  function sendBurst() {
-    for (const [eventType, data] of Object.entries(EVENT_TEMPLATES)) {
-      sendEvent(eventType, data);
+  function getTwitchCredentials() {
+    const creds = window.state?.creds?.twitch;
+    const plainCreds = typeof creds?.toObject === 'function' ? creds.toObject() : creds;
+    const clientId = String(plainCreds?.client_id || '').trim();
+    const clientSecret = String(plainCreds?.client_secret || '').trim();
+    if (!clientId || !clientSecret) {
+      throw new Error('Add a Twitch Client ID and Client Secret on the Credentials page first.');
     }
-    blastCount += 1;
-    els.blasts.textContent = String(blastCount);
-    return true;
+    return { clientId, clientSecret };
+  }
+
+  async function getTwitchAppToken() {
+    if (testShoutoutToken && Date.now() < testShoutoutTokenExpiresAt) {
+      return testShoutoutToken;
+    }
+
+    const { clientId, clientSecret } = getTwitchCredentials();
+    const response = await fetch('https://id.twitch.tv/oauth2/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: clientId,
+        client_secret: clientSecret,
+        grant_type: 'client_credentials',
+      }),
+    });
+    const tokenData = await response.json();
+    if (!response.ok || !tokenData.access_token) {
+      throw new Error(tokenData.message || 'Twitch app-token request failed.');
+    }
+
+    testShoutoutToken = tokenData.access_token;
+    testShoutoutTokenExpiresAt = Date.now() + Math.max(0, tokenData.expires_in - 60) * 1000;
+    return testShoutoutToken;
+  }
+
+  async function twitchHelixGet(endpoint, params = {}) {
+    const { clientId } = getTwitchCredentials();
+    const token = await getTwitchAppToken();
+    const url = new URL(`https://api.twitch.tv/helix/${endpoint}`);
+    Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, value));
+
+    const response = await fetch(url, {
+      headers: {
+        'Client-ID': clientId,
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.message || `Twitch ${endpoint} request failed.`);
+    }
+    return result.data || [];
+  }
+
+  async function getRandomTestShoutoutClip() {
+    let clips = testShoutoutClipCache;
+    if (Date.now() >= testShoutoutClipCacheExpiresAt) {
+      if (!testShoutoutLookup) {
+        testShoutoutLookup = (async () => {
+          const users = await twitchHelixGet('users', { login: TEST_SHOUTOUT_USER });
+          if (!users.length) throw new Error(`Twitch channel "${TEST_SHOUTOUT_USER}" was not found.`);
+
+          const result = await twitchHelixGet('clips', {
+            broadcaster_id: users[0].id,
+            first: '50',
+          });
+          testShoutoutClipCache = result;
+          testShoutoutClipCacheExpiresAt = Date.now() + TEST_CLIP_CACHE_MS;
+          return result;
+        })();
+      }
+
+      try {
+        clips = await testShoutoutLookup;
+      } finally {
+        testShoutoutLookup = null;
+      }
+    }
+
+    return clips.length ? clips[Math.floor(Math.random() * clips.length)] : null;
+  }
+
+  async function sendTestEvent(eventType, data) {
+    if (eventType !== 'shoutout') return sendEvent(eventType, data);
+
+    try {
+      const clip = await getRandomTestShoutoutClip();
+      if (!clip) appendFeed(`no clips found for ${TEST_SHOUTOUT_USER}; sending text shoutout`);
+      return sendEvent(eventType, {
+        user: TEST_SHOUTOUT_USER,
+        clip: clip ? {
+          id: clip.id,
+          title: clip.title,
+          url: clip.url,
+          thumbnail_url: clip.thumbnail_url,
+        } : null,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      appendFeed(`shoutout clip lookup failed: ${message}`);
+      console.error('[OverlayTest] Shoutout clip lookup failed:', error);
+      return false;
+    }
+  }
+
+  // Burst = all event types, so every overlay receives something it handles.
+  async function sendBurst() {
+    if (burstInProgress) return false;
+    burstInProgress = true;
+    try {
+      for (const [eventType, data] of Object.entries(EVENT_TEMPLATES)) {
+        await sendTestEvent(eventType, data);
+      }
+      blastCount += 1;
+      els.blasts.textContent = String(blastCount);
+      return true;
+    } finally {
+      burstInProgress = false;
+    }
   }
 
   // -------------------------------------------------------------------------
   // Wiring
   // -------------------------------------------------------------------------
-  els.testBtn.addEventListener('click', () => {
+  els.testBtn.addEventListener('click', async () => {
     const eventType = els.eventSelect.value;
     const data = EVENT_TEMPLATES[eventType];
-    if (data) sendEvent(eventType, data);
+    if (data) await sendTestEvent(eventType, data);
   });
 
   els.loopBtn.addEventListener('click', () => {
@@ -162,8 +287,8 @@ window.pageControllers.test = function () {
     els.loopBtn.dataset.running = 'true';
     els.loopBtn.textContent = `Looping every ${seconds}s — click to stop`;
 
-    sendBurst();
-    loopTimer = setInterval(sendBurst, seconds * 1000);
+    void sendBurst();
+    loopTimer = setInterval(() => void sendBurst(), seconds * 1000);
   });
 
   function stopLoop() {

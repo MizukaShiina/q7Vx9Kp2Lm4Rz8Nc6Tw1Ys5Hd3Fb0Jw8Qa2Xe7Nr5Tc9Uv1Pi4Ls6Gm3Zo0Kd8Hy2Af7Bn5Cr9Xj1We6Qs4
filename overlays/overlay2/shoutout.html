@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Shoutout Alert — MizuBot</title>
+    <style>
+        * { box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; margin: 0; }
+        body { overflow: hidden; background: transparent; color: #fff; font-family: Inter, "Segoe UI", sans-serif; }
+        #status { position: fixed; right: 14px; bottom: 14px; display: none; padding: 8px 12px; border: 1px solid #ff6b75; border-radius: 8px; background: #17131c; color: #ff8991; font: 12px monospace; }
+        #status.show { display: block; }
+        #shoutoutContainer {
+            position: fixed; top: 28px; left: 28px; width: min(900px, calc(100vw - 56px));
+            min-height: 300px; display: flex; overflow: hidden; border: 1px solid rgba(198, 163, 255, .52);
+            border-radius: 22px; background: linear-gradient(115deg, rgba(24, 19, 33, .97), rgba(33, 21, 48, .96));
+            box-shadow: 0 20px 70px rgba(15, 5, 28, .5), 0 0 32px rgba(145, 70, 255, .18);
+            opacity: 0; transform: translateX(calc(-100% - 40px)); pointer-events: none;
+        }
+        #shoutoutContainer.active { animation: card-in .7s cubic-bezier(.16, 1, .3, 1) forwards; }
+        #shoutoutContainer.exit { animation: card-out .45s ease-in forwards; }
+        .clip-player { flex: 0 0 55%; min-width: 400px; min-height: 300px; background: #08070a; pointer-events: auto; }
+        .clip-player iframe { display: block; width: 100%; height: 100%; min-width: 400px; min-height: 300px; border: 0; pointer-events: auto; }
+        .clip-player video { display: block; width: 100%; height: 100%; min-width: 400px; min-height: 300px; object-fit: cover; background: #08070a; }
+        .clip-thumbnail { position: relative; flex: 0 0 38%; min-height: 300px; background: linear-gradient(135deg, #211834, #120f18); }
+        .clip-thumbnail::after { position: absolute; inset: 0; border-right: 1px solid rgba(214, 190, 255, .25); background: linear-gradient(90deg, transparent 65%, rgba(25, 18, 36, .55)); content: ""; pointer-events: none; }
+        .clip-thumbnail img { width: 100%; height: 100%; min-height: 300px; display: block; object-fit: cover; }
+        .clip-info { min-width: 0; flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 25px 30px; }
+        .eyebrow { margin-bottom: 9px; color: #c6a2ff; font-size: 12px; font-weight: 850; letter-spacing: .2em; text-transform: uppercase; }
+        .username { overflow-wrap: anywhere; color: #fff; font-size: clamp(27px, 4vw, 42px); font-weight: 900; line-height: 1.05; letter-spacing: -.04em; }
+        .channel { margin-top: 6px; color: #c6a2ff; font-size: 17px; font-weight: 700; }
+        .clip-title { display: -webkit-box; margin-top: 12px; overflow: hidden; color: #ded5e9; font-size: 15px; line-height: 1.45; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+        .shoutout-badge { align-self: flex-start; margin-top: 15px; padding: 6px 10px; border: 1px solid rgba(188, 145, 255, .48); border-radius: 999px; background: rgba(145, 70, 255, .17); color: #d4b7ff; font-size: 11px; font-weight: 800; letter-spacing: .11em; text-transform: uppercase; }
+        @keyframes card-in { to { opacity: 1; transform: translateX(0); } }
+        @keyframes card-out { to { opacity: 0; transform: translateX(calc(-100% - 40px)); } }
+        @media (max-width: 560px) {
+            #shoutoutContainer { top: 14px; left: 14px; width: calc(100vw - 28px); }
+            .clip-player, .clip-player iframe, .clip-player video { min-width: 400px; min-height: 300px; }
+            .clip-info { padding: 18px; }
+        }
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; } }
+    </style>
+</head>
+<body>
+    <div id="status">SHOUTOUT OVERLAY: NOT CONNECTED</div>
+    <section id="shoutoutContainer" aria-live="polite"></section>
+    <script src="../script.js"></script>
+    <script>
+        const shoutoutContainer = document.getElementById('shoutoutContainer');
+        let shoutoutTimeout = null;
+        let shoutoutCleanupTimeout = null;
+        let shoutoutPlayerLoadTimeout = null;
+        let pendingClipEmbed = null; // function that starts playback once the card has slid in
+        let clipWatchdog = null; // interval that detects a frozen clip
+        const relayUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + (location.host || '127.0.0.1:8766');
+
+        function startPendingClipEmbed() {
+            if (!pendingClipEmbed) return;
+            const start = pendingClipEmbed;
+            pendingClipEmbed = null;
+            start();
+        }
+
+        shoutoutContainer.addEventListener('animationend', (event) => {
+            if (event.target === shoutoutContainer && event.animationName === 'card-in') {
+                startPendingClipEmbed();
+            }
+        });
+
+        function createClipInfo(user, clip) {
+            const info = document.createElement('div');
+            info.className = 'clip-info';
+            info.innerHTML = '<div class="eyebrow">Show some love</div><div class="username"></div><div class="channel"></div><div class="clip-title"></div><div class="shoutout-badge">Clip highlight</div>';
+            info.querySelector('.username').textContent = `👋 ${user}`;
+            info.querySelector('.channel').textContent = `twitch.tv/${user}`;
+            info.querySelector('.clip-title').textContent = clip?.title || '';
+            return info;
+        }
+
+        function getClipSlug(clip) {
+            if (typeof clip?.id === 'string' && /^[A-Za-z0-9_-]+$/.test(clip.id)) return clip.id;
+            if (typeof clip?.url !== 'string') return '';
+
+            try {
+                const segments = new URL(clip.url).pathname.split('/').filter(Boolean);
+                const clipIndex = segments.findIndex((segment) => segment.toLowerCase() === 'clip');
+                const slug = clipIndex >= 0 ? segments[clipIndex + 1] : segments[segments.length - 1];
+                return slug && /^[A-Za-z0-9_-]+$/.test(slug) ? slug : '';
+            } catch (error) {
+                console.warn('[Shoutout Overlay] Invalid clip URL:', error);
+                return '';
+            }
+        }
+
+        // Twitch clip mp4 is usually the thumbnail URL with the "-preview-WxH.jpg" suffix swapped for ".mp4"
+        function getClipMp4(clip) {
+            const t = clip?.thumbnail_url;
+            if (typeof t !== 'string') return '';
+            const mp4 = t.replace(/-preview-\d+x\d+\.(jpg|jpeg|png)$/i, '.mp4');
+            return mp4 !== t ? mp4 : '';
+        }
+
+        // Ask Twitch for a signed mp4 URL for the clip (unofficial API, same one twitch-dl / yt-dlp use).
+        // Falls back to the thumbnail-swap trick, then to '' (which means: use the iframe embed).
+        async function resolveClipMp4(clip, slug) {
+            try {
+                const query = `query { clip(slug: "${slug}") { playbackAccessToken(params: {platform: "web", playerBackend: "mediaplayer", playerType: "site"}) { signature value } videoQualities { frameRate quality sourceURL } } }`;
+                const res = await fetch('https://gql.twitch.tv/gql', {
+                    method: 'POST',
+                    headers: { 'Client-ID': 'kimne78kx3ncx6brgo4mv6wki5h1ko', 'Content-Type': 'text/plain;charset=UTF-8' },
+                    body: JSON.stringify({ query })
+                });
+                const json = await res.json();
+                const c = json?.data?.clip;
+                const token = c?.playbackAccessToken;
+                const qualities = (c?.videoQualities || []).slice().sort((a, b) => parseInt(b.quality) - parseInt(a.quality));
+                if (token && qualities[0]?.sourceURL) {
+                    console.log('[Shoutout Overlay] mp4 via GQL, quality', qualities[0].quality);
+                    return `${qualities[0].sourceURL}?sig=${token.signature}&token=${encodeURIComponent(token.value)}`;
+                }
+                console.warn('[Shoutout Overlay] GQL returned no clip sources', json);
+            } catch (err) {
+                console.warn('[Shoutout Overlay] GQL lookup failed:', err);
+            }
+            const swapped = getClipMp4(clip);
+            if (swapped) console.log('[Shoutout Overlay] mp4 via thumbnail swap');
+            return swapped;
+        }
+
+        function fallbackToText(user) {
+            shoutoutContainer.innerHTML = '';
+            const info = document.createElement('div');
+            info.className = 'clip-info';
+            info.innerHTML = '<div class="eyebrow">Show some love</div><div class="username"></div><div class="channel"></div><div class="shoutout-badge">Visit their channel</div>';
+            info.querySelector('.username').textContent = `👋 ${user}`;
+            info.querySelector('.channel').textContent = `twitch.tv/${user}`;
+            shoutoutContainer.appendChild(info);
+        }
+
+        function fallbackToClipCard(user, clip) {
+            clearTimeout(shoutoutPlayerLoadTimeout);
+            shoutoutContainer.innerHTML = '';
+            if (clip?.thumbnail_url) {
+                const thumbnail = document.createElement('div');
+                thumbnail.className = 'clip-thumbnail';
+                const image = document.createElement('img');
+                image.src = clip.thumbnail_url;
+                image.alt = '';
+                image.onerror = () => thumbnail.remove();
+                thumbnail.appendChild(image);
+                shoutoutContainer.append(thumbnail, createClipInfo(user, clip));
+            } else {
+                fallbackToText(user);
+            }
+        }
+
+        function showClipPlayer(user, clip, slug) {
+            const player = document.createElement('div');
+            player.className = 'clip-player';
+            shoutoutContainer.append(player, createClipInfo(user, clip));
+
+            // Fallback: Twitch iframe embed
+            const useIframe = () => {
+                player.innerHTML = '';
+                const iframe = document.createElement('iframe');
+                iframe.title = `Clip from ${user}`;
+                iframe.allow = 'autoplay; fullscreen; encrypted-media';
+                iframe.allowFullscreen = true;
+                iframe.onload = () => clearTimeout(shoutoutPlayerLoadTimeout);
+
+                const embedUrl = new URL('https://clips.twitch.tv/embed');
+                embedUrl.searchParams.set('clip', slug);
+                embedUrl.searchParams.set('parent', location.hostname || 'localhost');
+                embedUrl.searchParams.set('autoplay', 'true');
+                embedUrl.searchParams.set('muted', 'false');
+
+                player.appendChild(iframe);
+                iframe.src = embedUrl.toString();
+                // Can't detect the end of an iframe clip, so use its known length, capped at the max
+                const clipMs = Number(clip?.duration || 0) * 1000;
+                scheduleHide(clipMs > 0 ? Math.min(clipMs + 1500, MAX_SHOUTOUT_MS) : MAX_SHOUTOUT_MS);
+                shoutoutPlayerLoadTimeout = setTimeout(() => {
+                    if (iframe.isConnected) fallbackToClipCard(user, clip);
+                }, 12000);
+            };
+
+            // Start looking up the mp4 right away; it is used once the card has slid in
+            const mp4Promise = resolveClipMp4(clip, slug);
+
+            pendingClipEmbed = async () => {
+                const mp4 = await mp4Promise;
+                if (!player.isConnected) return; // a newer shoutout replaced this one
+                if (!mp4) {
+                    console.warn('[Shoutout Overlay] no mp4 available, using Twitch iframe (autoplay is unreliable there)');
+                    useIframe();
+                    return;
+                }
+
+                // Preferred: plain <video>, autoplays with sound in OBS
+                const video = document.createElement('video');
+                video.playsInline = true;
+                video.autoplay = true;
+                video.muted = false;
+                video.onerror = () => {
+                    console.warn('[Shoutout Overlay] mp4 failed to play, using Twitch iframe');
+                    if (video.isConnected) useIframe();
+                };
+                // 20s countdown starts when playback really begins; a shorter clip ends the shoutout early
+                video.addEventListener('playing', () => scheduleHide(MAX_SHOUTOUT_MS), { once: true });
+                video.addEventListener('ended', hideShoutout);
+                video.addEventListener('waiting', () => console.warn('[Shoutout Overlay] video buffering/waiting at', video.currentTime.toFixed(1)));
+                video.addEventListener('stalled', () => console.warn('[Shoutout Overlay] video stalled at', video.currentTime.toFixed(1)));
+
+                // Watchdog: if playback stops advancing, retry once from the same spot, then give up and close
+                let lastTime = -1;
+                let stuckSecs = 0;
+                let retried = false;
+                clearInterval(clipWatchdog);
+                clipWatchdog = setInterval(() => {
+                    if (shoutoutContainer.classList.contains('exit') || video.ended) return;
+                    if (video.currentTime === lastTime) stuckSecs++;
+                    else { stuckSecs = 0; lastTime = video.currentTime; }
+                    if (stuckSecs < 3) return;
+                    stuckSecs = 0;
+                    if (!retried) {
+                        retried = true;
+                        const resumeAt = video.currentTime;
+                        console.warn('[Shoutout Overlay] clip froze at', resumeAt.toFixed(1), 's, retrying once');
+                        video.addEventListener('loadedmetadata', () => {
+                            video.currentTime = resumeAt;
+                            video.play().catch(() => { });
+                        }, { once: true });
+                        video.src = mp4;
+                    } else {
+                        console.warn('[Shoutout Overlay] clip froze again, closing shoutout');
+                        hideShoutout();
+                    }
+                }, 1000);
+                player.appendChild(video);
+                video.src = mp4;
+                video.play().catch((err) => {
+                    // Normal Chrome tab without a prior click: play muted rather than not at all
+                    console.warn('[Shoutout Overlay] unmuted autoplay blocked:', err.name);
+                    video.muted = true;
+                    video.play().catch(() => {});
+                });
+            };
+        }
+
+        const MAX_SHOUTOUT_MS = 20000; // longest the shoutout stays up; shorter clips end sooner
+
+        function scheduleHide(ms) {
+            clearTimeout(shoutoutTimeout);
+            shoutoutTimeout = setTimeout(hideShoutout, ms);
+        }
+
+        // Actually silence the clip. A detached <video> can keep playing audio, so pause and unload it first.
+        function stopMedia() {
+            clearInterval(clipWatchdog);
+            shoutoutContainer.querySelectorAll('video').forEach((v) => {
+                v.onerror = null;
+                v.pause();
+                v.removeAttribute('src');
+                v.load();
+            });
+            shoutoutContainer.querySelectorAll('iframe').forEach((f) => {
+                f.onload = null;
+                f.src = 'about:blank';
+            });
+        }
+
+        function hideShoutout() {
+            clearTimeout(shoutoutTimeout);
+            clearTimeout(shoutoutPlayerLoadTimeout);
+            stopMedia();
+            shoutoutContainer.classList.add('exit');
+            clearTimeout(shoutoutCleanupTimeout);
+            shoutoutCleanupTimeout = setTimeout(() => {
+                shoutoutContainer.classList.remove('active', 'exit');
+                shoutoutContainer.innerHTML = '';
+            }, 500);
+        }
+
+        function handleShoutoutDisplay(data) {
+            const user = data?.user || 'a streamer';
+            const clip = data?.clip;
+            const slug = getClipSlug(clip);
+
+            clearTimeout(shoutoutTimeout);
+            clearTimeout(shoutoutCleanupTimeout);
+            clearTimeout(shoutoutPlayerLoadTimeout);
+            pendingClipEmbed = null;
+
+            stopMedia();
+            shoutoutContainer.classList.remove('active', 'exit');
+            shoutoutContainer.innerHTML = '';
+
+            if (slug) {
+                showClipPlayer(user, clip, slug);
+            } else {
+                fallbackToClipCard(user, clip);
+            }
+
+            void shoutoutContainer.offsetWidth;
+            shoutoutContainer.classList.add('active');
+
+            // Safety net (covers loading time). Tightened to the real 20s once the video actually starts playing.
+            scheduleHide(slug ? MAX_SHOUTOUT_MS + 5000 : 8000);
+        }
+
+        const wsClient = new OverlayWebSocketClient(relayUrl, 'status', 'SHOUTOUT');
+        wsClient.registerHandler('shoutout', handleShoutoutDisplay);
+        wsClient.connect();
+    </script>
+</body>
+</html>

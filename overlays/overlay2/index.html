@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>MizuBot Overlays — New Design</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { min-height: 100vh; margin: 0; padding: clamp(24px, 6vw, 72px); background: radial-gradient(ellipse at 15% 0, rgba(145, 70, 255, .2), transparent 38%), #100e14; color: #f5f1fa; font-family: Inter, "Segoe UI", sans-serif; }
+        .shell { width: min(1050px, 100%); margin: 0 auto; }
+        .brand { display: inline-flex; align-items: center; gap: 9px; color: #c5a0ff; font-size: 12px; font-weight: 850; letter-spacing: .2em; text-transform: uppercase; }
+        .brand::before { width: 9px; height: 9px; border-radius: 3px; background: #9146ff; box-shadow: 0 0 18px #9146ff; content: ""; transform: rotate(45deg); }
+        h1 { margin: 18px 0 10px; font-size: clamp(36px, 7vw, 68px); letter-spacing: -.06em; }
+        .intro { max-width: 650px; margin: 0; color: #bcb4c7; font-size: 17px; line-height: 1.6; }
+        #status { display: inline-flex; align-items: center; gap: 9px; margin-top: 28px; padding: 9px 13px; border: 1px solid #744e9b; border-radius: 999px; background: rgba(145, 70, 255, .12); color: #d7baff; font: 12px monospace; }
+        #status::before { width: 8px; height: 8px; border-radius: 50%; background: currentColor; content: ""; }
+        #status.alive { border-color: #4d986c; background: rgba(33, 155, 85, .12); color: #8de5ab; }
+        #status.dead { border-color: #a34f65; background: rgba(190, 56, 80, .12); color: #ff9aab; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 13px; margin-top: 34px; }
+        .card { position: relative; display: flex; min-height: 122px; flex-direction: column; justify-content: space-between; padding: 19px; overflow: hidden; border: 1px solid rgba(195, 164, 229, .2); border-radius: 16px; background: linear-gradient(135deg, rgba(34, 27, 44, .94), rgba(23, 19, 29, .92)); color: inherit; text-decoration: none; transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease; }
+        .card:hover { transform: translateY(-3px); border-color: rgba(190, 145, 255, .7); box-shadow: 0 12px 32px rgba(70, 32, 110, .22); }
+        .card-label { color: #a59bac; font-size: 11px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
+        .card-name { margin-top: 14px; font-size: 23px; font-weight: 800; letter-spacing: -.03em; }
+        .card-arrow { position: absolute; right: 18px; bottom: 17px; color: #c7a3ff; font-size: 20px; }
+        #feed { margin-top: 26px; padding: 17px; overflow: auto; border: 1px solid rgba(195, 164, 229, .16); border-radius: 14px; background: rgba(10, 9, 13, .62); color: #c3afd9; font: 12px/1.6 "Cascadia Code", Consolas, monospace; white-space: pre-wrap; }
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: .01ms !important; } }
+    </style>
+</head>
+<body>
+    <main class="shell">
+        <div class="brand">MizuBot · Overlay set 02</div>
+        <h1>Your stream, in motion.</h1>
+        <p class="intro">Twitch-inspired alerts with a fresh glass-and-neon look. Add an alert page as an OBS Browser Source; the existing local relay continues to deliver the same events.</p>
+        <div id="status" class="dead">RELAY: CONNECTING…</div>
+        <nav class="grid" aria-label="Overlay pages">
+            <a class="card" href="follow.html"><span class="card-label">Community</span><span class="card-name">Follow alert</span><span class="card-arrow">↗</span></a>
+            <a class="card" href="subs.html"><span class="card-label">Support</span><span class="card-name">Subs & gifts</span><span class="card-arrow">↗</span></a>
+            <a class="card" href="raid.html"><span class="card-label">Arrival</span><span class="card-name">Raid alert</span><span class="card-arrow">↗</span></a>
+            <a class="card" href="shoutout.html"><span class="card-label">Creator spotlight</span><span class="card-name">Shoutout</span><span class="card-arrow">↗</span></a>
+            <a class="card" href="chat.html"><span class="card-label">Live messages</span><span class="card-name">Chat overlay</span><span class="card-arrow">↗</span></a>
+            <a class="card" href="../winner.html"><span class="card-label">Existing page</span><span class="card-name">Winner overlay</span><span class="card-arrow">↗</span></a>
+        </nav>
+        <pre id="feed" aria-live="polite">Waiting for overlay events…</pre>
+    </main>
+    <script>
+        const statusEl = document.getElementById('status');
+        const feedEl = document.getElementById('feed');
+        const relayUrl = new URL((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host);
+        relayUrl.searchParams.set('source', location.pathname);
+        const ws = new WebSocket(relayUrl.toString());
+        ws.onopen = () => { statusEl.textContent = 'RELAY: LIVE'; statusEl.className = 'alive'; };
+        ws.onclose = () => { statusEl.textContent = 'RELAY: OFFLINE (webui closed?)'; statusEl.className = 'dead'; };
+        ws.onerror = () => { statusEl.textContent = 'RELAY: ERROR'; statusEl.className = 'dead'; };
+        ws.onmessage = (event) => {
+            const entries = feedEl.dataset.entries ? JSON.parse(feedEl.dataset.entries) : [];
+            entries.unshift(JSON.parse(event.data));
+            const nextEntries = entries.slice(0, 20);
+            feedEl.dataset.entries = JSON.stringify(nextEntries);
+            feedEl.textContent = JSON.stringify(nextEntries, null, 2);
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Raid Alert — MizuBot</title>
+    <style>
+        * { box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; margin: 0; }
+        body { display: grid; place-items: center; overflow: hidden; background: transparent; color: #fff; font-family: Inter, "Segoe UI", sans-serif; }
+        #status { position: fixed; right: 14px; bottom: 14px; display: none; padding: 8px 12px; border: 1px solid #ff6b75; border-radius: 8px; background: #17131c; color: #ff8991; font: 12px monospace; }
+        #status.show { display: block; }
+        .alert {
+            position: relative; display: flex; flex-direction: column; align-items: center;
+            width: min(1000px, calc(100vw - 40px)); padding: clamp(30px, 6vh, 64px) 30px;
+            overflow: hidden; border: 1px solid rgba(207, 177, 255, .62); border-radius: 30px;
+            background: linear-gradient(150deg, rgba(30, 20, 47, .96), rgba(14, 12, 20, .96) 75%);
+            text-align: center; box-shadow: 0 28px 100px rgba(18, 4, 34, .55), 0 0 60px rgba(145, 70, 255, .2);
+            opacity: 0; transform: translateY(30px) scale(.94); pointer-events: none;
+        }
+        .alert::before { position: absolute; inset: 0; background: repeating-linear-gradient(115deg, transparent 0 46px, rgba(176, 130, 255, .045) 47px 49px, transparent 50px 95px); content: ""; }
+        .alert::after { position: absolute; top: -40%; width: 50vw; height: 50vw; border-radius: 50%; background: radial-gradient(circle, rgba(145, 70, 255, .24), transparent 68%); content: ""; }
+        .content { position: relative; z-index: 1; }
+        .eyebrow { display: inline-flex; align-items: center; gap: 9px; padding: 8px 13px; border: 1px solid rgba(199, 166, 255, .45); border-radius: 999px; background: rgba(145, 70, 255, .15); color: #d6baff; font-size: 12px; font-weight: 850; letter-spacing: .18em; text-transform: uppercase; }
+        .eyebrow::before { width: 7px; height: 7px; border-radius: 50%; background: #c79aff; box-shadow: 0 0 12px #a45cff; content: ""; }
+        #main-text { margin-top: 23px; font-size: clamp(42px, 9vw, 104px); font-weight: 950; line-height: 1; letter-spacing: -.065em; overflow-wrap: anywhere; text-shadow: 0 0 36px rgba(145, 70, 255, .55); }
+        .divider { width: min(230px, 50vw); height: 2px; margin: 24px auto 18px; background: linear-gradient(90deg, transparent, #bb8cff, transparent); }
+        #viewer-text { color: #e1d6ef; font-size: clamp(20px, 3.4vw, 34px); font-weight: 600; }
+        #viewer-text strong { color: #d1aaff; font-weight: 850; }
+        .active { animation: raid-in .8s cubic-bezier(.16, 1, .3, 1) forwards; }
+        .leaving { animation: raid-out .4s ease-in forwards; }
+        .active .eyebrow { animation: badge-in .55s .16s both; }
+        .active #main-text { animation: title-in .7s .1s cubic-bezier(.16, 1, .3, 1) both; }
+        @keyframes raid-in { to { opacity: 1; transform: translateY(0) scale(1); } }
+        @keyframes raid-out { to { opacity: 0; transform: translateY(-20px) scale(.98); } }
+        @keyframes badge-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes title-in { from { opacity: 0; transform: scale(.86); } to { opacity: 1; transform: scale(1); } }
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; } }
+    </style>
+</head>
+<body>
+    <div id="status">RAID OVERLAY: NOT CONNECTED</div>
+    <main class="alert" id="alert-container" aria-live="polite">
+        <div class="content">
+            <div class="eyebrow">Incoming raid party</div>
+            <div id="main-text"></div>
+            <div class="divider"></div>
+            <div id="viewer-text"></div>
+        </div>
+    </main>
+    <script src="../script.js"></script>
+    <script>
+        const raidContainer = document.getElementById('alert-container');
+        const raidMainText = document.getElementById('main-text');
+        const raidViewerText = document.getElementById('viewer-text');
+        let raidHideTimeout = null;
+        const relayUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + (location.host || '127.0.0.1:8766');
+
+        function handleRaidDisplay(data) {
+            raidMainText.textContent = `${(data?.user || 'Someone').toUpperCase()} RAID!`;
+            raidViewerText.textContent = `bringing ${data?.viewers ?? 0} viewers`;
+            raidContainer.classList.remove('active', 'leaving');
+            void raidContainer.offsetWidth;
+            raidContainer.classList.add('active');
+            clearTimeout(raidHideTimeout);
+            raidHideTimeout = setTimeout(() => {
+                raidContainer.classList.remove('active');
+                raidContainer.classList.add('leaving');
+            }, 8000);
+        }
+
+        const wsClient = new OverlayWebSocketClient(relayUrl, 'status', 'RAID');
+        wsClient.registerHandler('raid', handleRaidDisplay);
+        wsClient.connect();
+    </script>
+</body>
+</html>

@@ -13,7 +13,8 @@
   <p class="page-card__description">
     Fire fake overlay events straight into the local relay (the same pipe the bot's
     <code>overlay_signal</code> packets use). Every connected overlay receives them at once —
-    no bot connection needed.
+    no bot connection needed. The shoutout test looks up a random clip from
+    <code>drinst</code> using the saved Twitch app credentials.
   </p>
 
   <div class="ot-status" id="ot-status" data-state="unknown">
@@ -35,7 +36,7 @@
         <option value="follow">Follow</option>
         <option value="sub">Sub</option>
         <option value="gift_sub">Gift Sub</option>
-        <option value="shoutout">Shoutout</option>
+        <option value="shoutout">Shoutout (random drinst clip)</option>
         <option value="chat_msg">Chat Message</option>
         <option value="winner">Winner</option>
       </select>
