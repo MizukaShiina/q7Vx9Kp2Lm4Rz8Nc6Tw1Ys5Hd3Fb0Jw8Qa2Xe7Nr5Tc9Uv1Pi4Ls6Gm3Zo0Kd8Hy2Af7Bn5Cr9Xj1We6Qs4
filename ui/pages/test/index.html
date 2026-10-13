@@ -56,6 +56,21 @@
     <button class="ot-btn ot-btn--danger" id="ot-loop" type="button" data-running="false">Test Loop — burst all to every overlay</button>
   </div>
 
+  <section class="ot-connection-check" aria-labelledby="ot-connection-title">
+    <div class="ot-connection-check__header">
+      <div>
+        <h4 id="ot-connection-title">Overlay connection check</h4>
+        <p>Loads each overlay page in a hidden, event-suppressed frame and checks whether it connects to this WebUI relay. This does not involve MizuBot.</p>
+      </div>
+      <button class="ot-btn ot-btn--primary" id="ot-check-connections" type="button">Check overlay connections</button>
+    </div>
+    <div class="ot-connection-check__status" id="ot-connection-status" role="status" aria-live="polite">
+      Ready to check overlay pages.
+    </div>
+    <ul class="ot-connection-results" id="ot-connection-results" aria-live="polite"></ul>
+    <div id="ot-connection-frames" class="ot-connection-frames" aria-hidden="true"></div>
+  </section>
+
   <div class="ot-stats">
     <div class="ot-stat"><span class="ot-stat__num" id="ot-count">0</span><span class="ot-stat__label">events sent</span></div>
     <div class="ot-stat"><span class="ot-stat__num" id="ot-clients">0</span><span class="ot-stat__label">overlays connected</span></div>

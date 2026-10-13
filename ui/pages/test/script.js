@@ -8,6 +8,7 @@ window.pageControllers = window.pageControllers || {};
 
 const TEST_SHOUTOUT_USER = 'drinst';
 const TEST_CLIP_CACHE_MS = 60 * 1000;
+const OVERLAY_CONNECTION_TIMEOUT_MS = 8000;
 let testShoutoutToken = null;
 let testShoutoutTokenExpiresAt = 0;
 let testShoutoutClipCache = null;
@@ -40,6 +41,10 @@ window.pageControllers.test = function () {
     testBtn: document.getElementById('ot-test'),
     loopBtn: document.getElementById('ot-loop'),
     interval: document.getElementById('ot-interval'),
+    connectionCheckBtn: document.getElementById('ot-check-connections'),
+    connectionStatus: document.getElementById('ot-connection-status'),
+    connectionResults: document.getElementById('ot-connection-results'),
+    connectionFrames: document.getElementById('ot-connection-frames'),
     count: document.getElementById('ot-count'),
     clients: document.getElementById('ot-clients'),
     blasts: document.getElementById('ot-blasts'),
@@ -53,6 +58,7 @@ window.pageControllers.test = function () {
   let pollTimer = null;
   let pageActive = true;
   let burstInProgress = false;
+  let connectionCheckRun = null;
 
   // -------------------------------------------------------------------------
   // Status polling (visible page only)
@@ -93,6 +99,142 @@ window.pageControllers.test = function () {
     pollTimer = setInterval(() => {
       if (pageActive) refreshStatus();
     }, 2500);
+  }
+
+  function createConnectionResult(overlayPath) {
+    const row = document.createElement('li');
+    row.className = 'ot-connection-result';
+    row.dataset.state = 'checking';
+    const pathLabel = document.createElement('span');
+    pathLabel.className = 'ot-connection-result__path';
+    pathLabel.textContent = overlayPath;
+    const stateLabel = document.createElement('span');
+    stateLabel.className = 'ot-connection-result__state';
+    stateLabel.textContent = 'Checking…';
+    row.append(pathLabel, stateLabel);
+    els.connectionResults.appendChild(row);
+    return { row, stateLabel };
+  }
+
+  function updateConnectionResult(result, state, text) {
+    result.row.dataset.state = state;
+    result.stateLabel.textContent = text;
+  }
+
+  function removeConnectionFrame(run) {
+    if (!run.frame) return;
+    run.frame.src = 'about:blank';
+    run.frame.remove();
+    run.frame = null;
+  }
+
+  function cancelConnectionCheck() {
+    if (!connectionCheckRun) return;
+    connectionCheckRun.cancelled = true;
+    removeConnectionFrame(connectionCheckRun);
+    connectionCheckRun = null;
+    els.connectionCheckBtn.disabled = false;
+    els.connectionStatus.textContent = 'Connection check stopped.';
+  }
+
+  function delay(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  async function getRelayStatusForCheck() {
+    if (!window.electronAPI?.getOverlayServerStatus) {
+      throw new Error('This check requires the WebUI Electron app.');
+    }
+    const status = await window.electronAPI.getOverlayServerStatus();
+    if (!status?.started) throw new Error('The local overlay relay is not running.');
+    return status;
+  }
+
+  async function waitForOverlayConnection(run, overlayPath, previousCount) {
+    const deadline = Date.now() + OVERLAY_CONNECTION_TIMEOUT_MS;
+    while (!run.cancelled && Date.now() < deadline) {
+      const status = await getRelayStatusForCheck();
+      const matchingClients = (status.overlays || []).filter((overlay) => overlay.path === overlayPath).length;
+      if (matchingClients > previousCount) return true;
+      await delay(200);
+    }
+    return false;
+  }
+
+  async function runConnectionCheck() {
+    if (connectionCheckRun) return;
+
+    const run = { cancelled: false, frame: null };
+    let activeResult = null;
+    connectionCheckRun = run;
+    els.connectionCheckBtn.disabled = true;
+    els.connectionResults.replaceChildren();
+    els.connectionStatus.dataset.state = 'checking';
+    els.connectionStatus.textContent = 'Reading overlay pages…';
+
+    try {
+      const status = await getRelayStatusForCheck();
+      if (typeof window.electronAPI.getOverlayPages !== 'function') {
+        throw new Error('This WebUI version cannot list overlay pages.');
+      }
+      const overlayPages = await window.electronAPI.getOverlayPages();
+      if (!Array.isArray(overlayPages) || overlayPages.length === 0) {
+        throw new Error('No HTML overlay pages were found.');
+      }
+
+      let connectedCount = 0;
+      let failedCount = 0;
+      for (const overlayPath of overlayPages) {
+        if (run.cancelled) return;
+
+        activeResult = createConnectionResult(overlayPath);
+        const currentStatus = await getRelayStatusForCheck();
+        if (run.cancelled) return;
+        const previousCount = (currentStatus.overlays || [])
+          .filter((overlay) => overlay.path === overlayPath)
+          .length;
+        const frame = document.createElement('iframe');
+        frame.title = `Overlay connection check ${overlayPath}`;
+        const overlayUrl = new URL(overlayPath, `http://127.0.0.1:${status.port}`);
+        overlayUrl.searchParams.set('connectionCheck', '1');
+        frame.src = overlayUrl.toString();
+        run.frame = frame;
+        els.connectionFrames.appendChild(frame);
+        els.connectionStatus.textContent = `Checking ${overlayPath} (${connectedCount + failedCount + 1}/${overlayPages.length})…`;
+
+        const connected = await waitForOverlayConnection(run, overlayPath, previousCount);
+        if (run.cancelled) return;
+        if (connected) {
+          connectedCount += 1;
+          updateConnectionResult(activeResult, 'connected', 'Connected');
+        } else {
+          failedCount += 1;
+          updateConnectionResult(activeResult, 'failed', 'No connection (timed out)');
+        }
+        removeConnectionFrame(run);
+        activeResult = null;
+      }
+
+      if (!run.cancelled) {
+        els.connectionStatus.dataset.state = failedCount ? 'error' : 'connected';
+        els.connectionStatus.textContent = `Finished: ${connectedCount} connected, ${failedCount} timed out. A timeout can mean the page failed to load or its WebSocket could not connect.`;
+      }
+    } catch (error) {
+      if (!run.cancelled) {
+        if (activeResult) {
+          updateConnectionResult(activeResult, 'failed', 'Could not verify');
+        }
+        els.connectionStatus.dataset.state = 'error';
+        els.connectionStatus.textContent = `Connection check failed: ${error instanceof Error ? error.message : String(error)}`;
+      }
+    } finally {
+      removeConnectionFrame(run);
+      if (connectionCheckRun === run) {
+        connectionCheckRun = null;
+        els.connectionCheckBtn.disabled = false;
+      }
+      refreshStatus();
+    }
   }
 
   function appendFeed(text) {
@@ -291,6 +433,8 @@ window.pageControllers.test = function () {
     loopTimer = setInterval(() => void sendBurst(), seconds * 1000);
   });
 
+  els.connectionCheckBtn.addEventListener('click', runConnectionCheck);
+
   function stopLoop() {
     loopRunning = false;
     clearInterval(loopTimer);
@@ -303,7 +447,10 @@ window.pageControllers.test = function () {
   // status polling when we come back. Clean up prior handlers on re-init.
   const handleActivate = (ev) => {
     pageActive = ev.detail?.pageId === 'test';
-    if (!pageActive) stopLoop();
+    if (!pageActive) {
+      stopLoop();
+      cancelConnectionCheck();
+    }
     if (pageActive) refreshStatus();
   };
   if (window.pageControllers.__testActivateHandler) {

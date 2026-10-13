@@ -7,6 +7,7 @@ class OverlayWebSocketClient {
         this.wsUrl = relayUrl.toString();
         this.statusElement = document.getElementById(statusElementId);
         this.overlayName = overlayName || "OVERLAY"; // Default name if not provided
+        this.connectionCheck = new URLSearchParams(window.location.search).get('connectionCheck') === '1';
         this.ws = null;
         this.reconnectTimeout = null;
         this.eventHandlers = {}; // Map eventType to handler function
@@ -48,6 +49,7 @@ class OverlayWebSocketClient {
         };
 
         this.ws.onmessage = (event) => {
+            if (this.connectionCheck) return;
             try {
                 const msg = JSON.parse(event.data);
                 if (msg.event && typeof this.eventHandlers[msg.event] === 'function') {

@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>WebUI Relay Connection Diagnostics</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            padding: clamp(18px, 4vw, 42px);
+            background: #100e14;
+            color: #f5f1fa;
+            font-family: Inter, "Segoe UI", sans-serif;
+        }
+        main { width: min(900px, 100%); margin: 0 auto; }
+        .eyebrow { color: #c5a0ff; font-size: 11px; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; }
+        h1 { margin: 9px 0; font-size: clamp(25px, 5vw, 40px); }
+        .intro { max-width: 680px; color: #bcb4c7; line-height: 1.55; }
+        .panel {
+            margin-top: 16px;
+            padding: 16px;
+            border: 1px solid rgba(195, 164, 229, .2);
+            border-radius: 12px;
+            background: rgba(29, 22, 39, .8);
+        }
+        .state { display: flex; align-items: center; gap: 10px; font: 700 15px monospace; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; background: #fbbf24; box-shadow: 0 0 12px currentColor; }
+        .state[data-state="connected"] { color: #8de5ab; }
+        .state[data-state="connected"] .dot { background: #4ade80; }
+        .state[data-state="disconnected"], .state[data-state="error"] { color: #ff9aab; }
+        .state[data-state="disconnected"] .dot, .state[data-state="error"] .dot { background: #fb7185; }
+        .state[data-state="connecting"], .state[data-state="retrying"] { color: #ffd479; }
+        .details { display: grid; grid-template-columns: minmax(125px, auto) 1fr; gap: 8px 14px; margin-top: 15px; font: 12px/1.5 monospace; }
+        .details dt { color: #a59bac; }
+        .details dd { min-width: 0; margin: 0; overflow-wrap: anywhere; color: #eee7f5; }
+        h2 { margin: 22px 0 8px; font-size: 14px; }
+        #log { display: flex; flex-direction: column; gap: 5px; max-height: 42vh; margin: 0; padding: 0; overflow: auto; list-style: none; }
+        #log li { padding: 7px 9px; border: 1px solid rgba(255, 255, 255, .06); border-radius: 6px; background: rgba(0, 0, 0, .2); color: #d8d0e0; font: 11px/1.5 monospace; overflow-wrap: anywhere; }
+        #log li[data-kind="error"], #log li[data-kind="close"] { color: #ffb1bb; }
+        #log li[data-kind="open"] { color: #a7f3d0; }
+        .note { margin-top: 14px; color: #a59bac; font-size: 12px; line-height: 1.5; }
+    </style>
+</head>
+<body>
+    <main>
+        <div class="eyebrow">MizuBot · WebUI relay</div>
+        <h1>OBS Connection Diagnostics</h1>
+        <p class="intro">
+            This page runs inside the OBS Browser Source and tests the same local WebSocket relay used by the overlays.
+            It does not require MizuBot to be connected.
+        </p>
+
+        <section class="panel" aria-label="Connection details">
+            <div class="state" id="connection-state" data-state="connecting">
+                <span class="dot" aria-hidden="true"></span>
+                <span id="connection-label">Starting connection…</span>
+            </div>
+            <dl class="details">
+                <dt>Page URL</dt><dd id="page-url"></dd>
+                <dt>Relay URL</dt><dd id="relay-url"></dd>
+                <dt>WebSocket state</dt><dd id="socket-state">Not created</dd>
+                <dt>Connection attempts</dt><dd id="attempt-count">0</dd>
+                <dt>Reconnect</dt><dd id="reconnect-countdown">Not scheduled</dd>
+                <dt>Connected since</dt><dd id="connected-since">—</dd>
+                <dt>Messages received</dt><dd id="message-count">0</dd>
+                <dt>Last event type</dt><dd id="last-event">—</dd>
+            </dl>
+        </section>
+
+        <h2>Connection log</h2>
+        <ol id="log" aria-live="polite"></ol>
+        <p class="note">
+            Browser security limits WebSocket error detail: an “error” entry may be generic. The following close code,
+            reason, timestamp, and retry countdown provide additional clues. This confirms OBS browser connectivity,
+            not that OBS can render every overlay asset.
+        </p>
+    </main>
+
+    <script>
+        const RETRY_DELAY_MS = 5000;
+        const stateEl = document.getElementById('connection-state');
+        const labelEl = document.getElementById('connection-label');
+        const socketStateEl = document.getElementById('socket-state');
+        const attemptsEl = document.getElementById('attempt-count');
+        const retryEl = document.getElementById('reconnect-countdown');
+        const connectedSinceEl = document.getElementById('connected-since');
+        const messageCountEl = document.getElementById('message-count');
+        const lastEventEl = document.getElementById('last-event');
+        const logEl = document.getElementById('log');
+        const relayUrl = new URL(
+            (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host
+        );
+        relayUrl.searchParams.set('source', location.pathname);
+        document.getElementById('page-url').textContent = location.href;
+        document.getElementById('relay-url').textContent = relayUrl.toString();
+
+        let socket = null;
+        let reconnectTimer = null;
+        let countdownTimer = null;
+        let attempts = 0;
+        let messages = 0;
+
+        function timestamp() {
+            return new Date().toLocaleTimeString();
+        }
+
+        function log(message, kind = 'info') {
+            const entry = document.createElement('li');
+            entry.dataset.kind = kind;
+            entry.textContent = `[${timestamp()}] ${message}`;
+            logEl.prepend(entry);
+            while (logEl.children.length > 60) logEl.lastElementChild.remove();
+        }
+
+        function setState(state, label) {
+            stateEl.dataset.state = state;
+            labelEl.textContent = label;
+        }
+
+        function updateSocketState(ws) {
+            const states = ['CONNECTING', 'OPEN', 'CLOSING', 'CLOSED'];
+            socketStateEl.textContent = states[ws.readyState] || `Unknown (${ws.readyState})`;
+        }
+
+        function stopCountdown() {
+            clearInterval(countdownTimer);
+            countdownTimer = null;
+            retryEl.textContent = 'Not scheduled';
+        }
+
+        function scheduleReconnect() {
+            clearTimeout(reconnectTimer);
+            clearInterval(countdownTimer);
+            const retryAt = Date.now() + RETRY_DELAY_MS;
+            setState('retrying', 'Disconnected — retry scheduled');
+            function updateCountdown() {
+                const remaining = Math.max(0, retryAt - Date.now());
+                retryEl.textContent = `${(remaining / 1000).toFixed(1)}s`;
+                if (remaining <= 0) clearInterval(countdownTimer);
+            }
+            updateCountdown();
+            countdownTimer = setInterval(updateCountdown, 100);
+            reconnectTimer = setTimeout(connect, RETRY_DELAY_MS);
+        }
+
+        function connect() {
+            clearTimeout(reconnectTimer);
+            reconnectTimer = null;
+            stopCountdown();
+            attempts += 1;
+            attemptsEl.textContent = String(attempts);
+            connectedSinceEl.textContent = '—';
+            setState('connecting', `Connecting (attempt ${attempts})…`);
+            log(`Opening WebSocket connection to ${relayUrl}`);
+
+            try {
+                const currentSocket = new WebSocket(relayUrl.toString());
+                socket = currentSocket;
+                updateSocketState(currentSocket);
+
+                currentSocket.addEventListener('open', () => {
+                    if (socket !== currentSocket) return;
+                    updateSocketState(currentSocket);
+                    setState('connected', 'Connected to WebUI relay');
+                    retryEl.textContent = 'Not scheduled';
+                    connectedSinceEl.textContent = timestamp();
+                    log('WebSocket opened successfully.', 'open');
+                });
+
+                currentSocket.addEventListener('message', (event) => {
+                    if (socket !== currentSocket) return;
+                    messages += 1;
+                    messageCountEl.textContent = String(messages);
+                    try {
+                        const message = JSON.parse(event.data);
+                        lastEventEl.textContent = typeof message.event === 'string' ? message.event : 'Unlabelled message';
+                    } catch {
+                        lastEventEl.textContent = 'Non-JSON message';
+                    }
+                });
+
+                currentSocket.addEventListener('error', () => {
+                    if (socket !== currentSocket) return;
+                    updateSocketState(currentSocket);
+                    setState('error', 'WebSocket error (details may be restricted)');
+                    log(`WebSocket error event; readyState=${currentSocket.readyState}. Browser may not expose more detail.`, 'error');
+                });
+
+                currentSocket.addEventListener('close', (event) => {
+                    if (socket !== currentSocket) return;
+                    updateSocketState(currentSocket);
+                    connectedSinceEl.textContent = '—';
+                    setState('disconnected', `Disconnected — retrying in ${RETRY_DELAY_MS / 1000}s`);
+                    log(`WebSocket closed: code=${event.code}, reason=${event.reason || '(empty)'}, clean=${event.wasClean}`, 'close');
+                    scheduleReconnect();
+                });
+            } catch (error) {
+                socketStateEl.textContent = 'Not created';
+                setState('error', 'Could not create WebSocket');
+                log(`WebSocket construction failed: ${error.message || String(error)}`, 'error');
+                scheduleReconnect();
+            }
+        }
+
+        log(`Diagnostic page loaded at ${location.href}`);
+        connect();
+    </script>
+</body>
+</html>

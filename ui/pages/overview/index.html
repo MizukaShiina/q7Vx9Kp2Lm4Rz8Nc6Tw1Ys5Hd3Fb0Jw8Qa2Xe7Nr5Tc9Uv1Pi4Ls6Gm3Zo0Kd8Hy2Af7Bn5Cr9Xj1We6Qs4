@@ -1,163 +1,120 @@
-<section class="page-card ovc-shell">
-
-  <div class="page-card__header">
+<section class="page-card overview-page" aria-labelledby="overview-heading">
+  <header class="overview-header">
     <div>
-      <p class="panel-label">System status</p>
-      <h3>Overview</h3>
+      <p class="panel-label">At a glance</p>
+      <h3 id="overview-heading">Your bot, right now</h3>
+      <p class="page-card__description">Live stream, service health, and the latest things that may need your attention.</p>
     </div>
-    <div class="pill-group">
-      <span class="pill pill--accent">Connected</span>
-      <span class="pill">Updated now</span>
+    <span class="overview-connection" id="overview-connection" data-state="pending" role="status">
+      <span class="overview-connection__dot" aria-hidden="true"></span>
+      <span id="overview-connection-label">Waiting for bot</span>
+    </span>
+  </header>
+
+  <section class="overview-stream" id="overview-stream" data-state="pending" aria-labelledby="overview-stream-title">
+    <div class="overview-stream__main">
+      <div class="overview-stream__eyebrow">
+        <span class="overview-live-dot" aria-hidden="true"></span>
+        <span id="overview-stream-status">Checking stream</span>
+      </div>
+      <h4 id="overview-stream-title">Waiting for stream state…</h4>
+      <p id="overview-stream-category">Stream details will appear when the bot connects.</p>
     </div>
+    <div class="overview-stream__stats" aria-label="Stream statistics">
+      <div class="overview-stat">
+        <strong id="overview-viewers">—</strong>
+        <span>Viewers</span>
+      </div>
+      <div class="overview-stat">
+        <strong id="overview-uptime">—</strong>
+        <span>Uptime</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="overview-section" aria-labelledby="overview-services-heading">
+    <div class="overview-section__heading">
+      <div>
+        <p class="panel-label">Runtime</p>
+        <h4 id="overview-services-heading">Services</h4>
+      </div>
+      <span class="overview-updated" id="overview-updated">Waiting for state</span>
+    </div>
+
+    <div class="overview-services">
+      <article class="overview-service" data-service-card="irc" data-state="pending">
+        <div class="overview-service__top"><span class="overview-service__icon" aria-hidden="true">◉</span><span class="overview-service__name">Twitch chat</span><span class="overview-service__badge" data-service-badge>Waiting</span></div>
+        <p data-service-detail>Waiting for bot state</p>
+      </article>
+      <article class="overview-service" data-service-card="discord" data-state="pending">
+        <div class="overview-service__top"><span class="overview-service__icon" aria-hidden="true">◈</span><span class="overview-service__name">Discord</span><span class="overview-service__badge" data-service-badge>Waiting</span></div>
+        <p data-service-detail>Waiting for bot state</p>
+      </article>
+      <article class="overview-service" data-service-card="database" data-state="pending">
+        <div class="overview-service__top"><span class="overview-service__icon" aria-hidden="true">▤</span><span class="overview-service__name">Database</span><span class="overview-service__badge" data-service-badge>Waiting</span></div>
+        <p data-service-detail>Waiting for bot state</p>
+      </article>
+      <article class="overview-service" data-service-card="instagram" data-state="pending">
+        <div class="overview-service__top"><span class="overview-service__icon" aria-hidden="true">◎</span><span class="overview-service__name">Instagram</span><span class="overview-service__badge" data-service-badge>Waiting</span></div>
+        <p data-service-detail>Waiting for bot state</p>
+      </article>
+      <article class="overview-service" data-service-card="dropbox" data-state="pending">
+        <div class="overview-service__top"><span class="overview-service__icon" aria-hidden="true">☁</span><span class="overview-service__name">Dropbox backup</span><span class="overview-service__badge" data-service-badge>Waiting</span></div>
+        <p data-service-detail>Waiting for bot state</p>
+      </article>
+      <article class="overview-service" data-service-card="overlay" data-state="pending">
+        <div class="overview-service__top"><span class="overview-service__icon" aria-hidden="true">▣</span><span class="overview-service__name">Overlay relay</span><span class="overview-service__badge" data-service-badge>Checking</span></div>
+        <p data-service-detail>Checking local relay</p>
+      </article>
+    </div>
+  </section>
+
+  <div class="overview-lower">
+    <section class="overview-panel" aria-labelledby="overview-giveaway-heading">
+      <div class="overview-section__heading">
+        <div>
+          <p class="panel-label">Participation</p>
+          <h4 id="overview-giveaway-heading">Giveaway &amp; scheduler</h4>
+        </div>
+        <button class="overview-link" type="button" data-overview-page="giveaway">Open giveaway <span aria-hidden="true">↗</span></button>
+      </div>
+      <div class="overview-giveaway" id="overview-giveaway" data-state="pending">
+        <div class="overview-giveaway__status">
+          <strong id="overview-giveaway-state">Waiting for state</strong>
+          <span id="overview-giveaway-runtime">—</span>
+        </div>
+        <p id="overview-giveaway-prize">Giveaway details will appear when the bot connects.</p>
+        <div class="overview-giveaway__meta">
+          <span><strong id="overview-giveaway-entries">—</strong> entries</span>
+          <span class="overview-giveaway__scheduler" id="overview-scheduler">Scheduler: —</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="overview-panel overview-activity" aria-labelledby="overview-activity-heading">
+      <div class="overview-section__heading">
+        <div>
+          <p class="panel-label">System log</p>
+          <h4 id="overview-activity-heading">Recent activity</h4>
+        </div>
+        <button class="overview-link" type="button" data-overview-page="logs">View logs <span aria-hidden="true">↗</span></button>
+      </div>
+      <div class="overview-activity__list" id="overview-activity-list" aria-live="polite">
+        <p class="overview-empty">Waiting for recent system logs…</p>
+      </div>
+    </section>
   </div>
 
-  <p class="page-card__description">
-    Status of literally everything — a cockpit for the bot, its services, and the connected systems. These chips are static placeholders for now (no live data wired in).
-  </p>
-
-  <!-- Warnings strip (placeholder; database issues are live) -->
-  <div class="ovc-warnings" id="ovc-warnings">
-    <span class="ovc-warnings__label" id="ovc-warnings-label">Attention</span>
-    <span class="ovc-warnings__text" id="ovc-warnings-text">Waiting for database state…</span>
-  </div>
-
-  <div class="ovc-status">
-
-    <!-- Database — LIVE: verified against EXPECTED_TABLES in script.js -->
-    <div class="ovc-chip ovc-chip--ok" id="ovc-db" data-chip="database">
-      <div class="ovc-chip__head">
-        <span class="ovc-chip__icon">🗄</span>
-        <span class="ovc-chip__name">Database</span>
-        <span class="ovc-chip__badge ovc-chip__badge--ok">Ok</span>
+  <section class="overview-attention" id="overview-attention" data-state="pending" aria-labelledby="overview-attention-heading">
+    <div class="overview-section__heading">
+      <div>
+        <p class="panel-label">Next steps</p>
+        <h4 id="overview-attention-heading">Needs attention</h4>
       </div>
-      <div class="ovc-chip__meta" id="ovc-db-meta">Waiting for state…</div>
-      <div class="ovc-chip__foot">
-        <button class="ovc-chip__check" type="button">Check</button>
-        <span class="ovc-chip__time" id="ovc-db-time">—</span>
-      </div>
+      <span class="overview-attention__count" id="overview-attention-count">—</span>
     </div>
-
-    <div class="ovc-chip ovc-chip--ok">
-      <div class="ovc-chip__head">
-        <span class="ovc-chip__icon">💬</span>
-        <span class="ovc-chip__name">IRC</span>
-        <span class="ovc-chip__badge ovc-chip__badge--ok">Live</span>
-      </div>
-      <div class="ovc-chip__meta">
-        <span>Connected · #mizuka</span>
-      </div>
-      <div class="ovc-chip__foot">
-        <button class="ovc-chip__check" type="button">Check</button>
-        <span class="ovc-chip__time">just now</span>
-      </div>
+    <div class="overview-attention__list" id="overview-attention-list">
+      <p class="overview-empty">Waiting for service status…</p>
     </div>
-
-    <div class="ovc-chip ovc-chip--off" id="ovc-discord" data-chip="discord">
-      <div class="ovc-chip__head">
-        <span class="ovc-chip__icon">🟦</span>
-        <span class="ovc-chip__name">Discord</span>
-        <span class="ovc-chip__badge ovc-chip__badge--off">Idle</span>
-      </div>
-      <div class="ovc-chip__meta" id="ovc-discord-meta">Waiting for state…</div>
-      <div class="ovc-chip__foot">
-        <button class="ovc-chip__check" type="button">Check</button>
-        <span class="ovc-chip__time" id="ovc-discord-time">—</span>
-      </div>
-    </div>
-
-    <div class="ovc-chip ovc-chip--ok">
-      <div class="ovc-chip__head">
-        <span class="ovc-chip__icon">🎬</span>
-        <span class="ovc-chip__name">OBS</span>
-        <span class="ovc-chip__badge ovc-chip__badge--ok">Live</span>
-      </div>
-      <div class="ovc-chip__meta">
-        <span>Scene A · 720p60</span>
-      </div>
-      <div class="ovc-chip__foot">
-        <button class="ovc-chip__check" type="button">Check</button>
-        <span class="ovc-chip__time">just now</span>
-      </div>
-    </div>
-
-    <!-- Configured but unverified example -->
-    <div class="ovc-chip ovc-chip--warn">
-      <div class="ovc-chip__head">
-        <span class="ovc-chip__icon">🔑</span>
-        <span class="ovc-chip__name">Credentials</span>
-        <span class="ovc-chip__badge ovc-chip__badge--warn">Unverified</span>
-      </div>
-      <div class="ovc-chip__meta">
-        <span>Twitch set</span><span>·</span><span>OBS set</span><span>·</span><span>Dropbox —</span>
-      </div>
-      <div class="ovc-chip__foot">
-        <button class="ovc-chip__check" type="button">Check</button>
-        <span class="ovc-chip__time">never</span>
-      </div>
-    </div>
-
-    <div class="ovc-chip ovc-chip--warn">
-      <div class="ovc-chip__head">
-        <span class="ovc-chip__icon">☁️</span>
-        <span class="ovc-chip__name">Dropbox</span>
-        <span class="ovc-chip__badge ovc-chip__badge--warn">Unverified</span>
-      </div>
-      <div class="ovc-chip__meta">
-        <span>Last backup 2h ago</span>
-      </div>
-      <div class="ovc-chip__foot">
-        <button class="ovc-chip__check" type="button">Check</button>
-        <span class="ovc-chip__time">2h ago</span>
-      </div>
-    </div>
-
-    <div class="ovc-chip ovc-chip--ok">
-      <div class="ovc-chip__head">
-        <span class="ovc-chip__icon">⚙️</span>
-        <span class="ovc-chip__name">Config</span>
-        <span class="ovc-chip__badge ovc-chip__badge--ok">Loaded</span>
-      </div>
-      <div class="ovc-chip__meta">
-        <span>24 options · no conflicts</span>
-      </div>
-      <div class="ovc-chip__foot">
-        <button class="ovc-chip__check" type="button">Check</button>
-        <span class="ovc-chip__time">5 min ago</span>
-      </div>
-    </div>
-
-    <!-- Not configured example -->
-    <div class="ovc-chip ovc-chip--off">
-      <div class="ovc-chip__head">
-        <span class="ovc-chip__icon">🖼</span>
-        <span class="ovc-chip__name">Overlay</span>
-        <span class="ovc-chip__badge ovc-chip__badge--off">Off</span>
-      </div>
-      <div class="ovc-chip__meta">
-        <span>— Not configured —</span>
-      </div>
-      <div class="ovc-chip__foot">
-        <button class="ovc-chip__check" type="button">Check</button>
-        <span class="ovc-chip__time">—</span>
-      </div>
-    </div>
-
-    <!-- Severely broken example -->
-    <div class="ovc-chip ovc-chip--err">
-      <div class="ovc-chip__head">
-        <span class="ovc-chip__icon">📡</span>
-        <span class="ovc-chip__name">Gateway</span>
-        <span class="ovc-chip__badge ovc-chip__badge--err">Error</span>
-      </div>
-      <div class="ovc-chip__meta">
-        <span>State stale · 12s</span>
-      </div>
-      <div class="ovc-chip__foot">
-        <button class="ovc-chip__check" type="button">Check</button>
-        <span class="ovc-chip__time">12s ago</span>
-      </div>
-    </div>
-
-  </div>
-
+  </section>
 </section>
