@@ -584,6 +584,7 @@ async function activatePage(pageId, { forceReload = false } = {}) {
 
   // Now everything is ready, so show the page.
   pageElement.style.display = '';
+  host.dataset.activePage = pageId;
 
   // Dispatch page activation so pages can update the header if needed
   const headerActionsVersionAtActivation = headerActionsVersion;

@@ -9,10 +9,23 @@
 
 let credentialsLiveOverride = false;
 
+function positionLiveGuard() {
+  const guard = document.getElementById('creds-live-guard');
+  const pageHost = document.getElementById('page-host');
+  if (!guard || !pageHost) return;
+
+  const bounds = pageHost.getBoundingClientRect();
+  guard.style.top = `${bounds.top}px`;
+  guard.style.left = `${bounds.left}px`;
+  guard.style.width = `${bounds.width}px`;
+  guard.style.height = `${bounds.height}px`;
+}
+
 function refreshLiveGuard() {
   const guard = document.getElementById('creds-live-guard');
-  if (!guard || credentialsLiveOverride) return;
-  guard.hidden = window.state?.stream?.is_live !== true;
+  if (!guard) return;
+  guard.hidden = credentialsLiveOverride || window.state?.stream?.is_live !== true;
+  positionLiveGuard();
 }
 
 const TWITCH_EXCLUDED_KEYS = new Set([
@@ -677,6 +690,16 @@ window.pageControllers.credentials = function () {
   const saveButton = document.getElementById("creds-save");
   const revertButton = document.getElementById("creds-revert");
   const liveEnter = document.getElementById('creds-live-enter');
+  const pageHost = document.getElementById('page-host');
+  if (window.pageControllers.__credsGuardResizeObserver) {
+    window.pageControllers.__credsGuardResizeObserver.disconnect();
+  }
+  if (pageHost && typeof ResizeObserver !== 'undefined') {
+    window.pageControllers.__credsGuardResizeObserver = new ResizeObserver(positionLiveGuard);
+    window.pageControllers.__credsGuardResizeObserver.observe(pageHost);
+  }
+  window.removeEventListener('resize', positionLiveGuard);
+  window.addEventListener('resize', positionLiveGuard);
   liveEnter?.addEventListener('click', () => {
     credentialsLiveOverride = true;
     refreshLiveGuard();
@@ -755,5 +778,4 @@ async function initCredsPage() {
 
 initCredsPage();
 })();
-
 
