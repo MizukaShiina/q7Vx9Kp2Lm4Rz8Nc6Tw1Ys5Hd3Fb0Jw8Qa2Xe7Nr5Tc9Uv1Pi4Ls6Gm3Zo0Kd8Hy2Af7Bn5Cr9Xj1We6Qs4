@@ -25,9 +25,14 @@
     'chat:read',
     'chat:edit',
     'moderator:read:chatters',
+    'moderator:read:followers',
+  ];
+  const STREAMER_SCOPES = [
+    ...SCOPES,
+    'channel:manage:polls',
+    'channel:manage:predictions',
     'channel:read:subscriptions',
     'channel:manage:broadcast',
-    'moderator:read:followers',
     'channel:read:redemptions',
   ];
 
@@ -44,7 +49,7 @@
       key: 'stream_oauth',
       refreshKey: 'stream_refresh_token',
       account: 'streamer',
-      loginHint: 'Log in as the STREAMER account (required for the subscriptions scope).',
+      loginHint: 'Log in as the STREAMER account. Grants channel management for polls and predictions, plus the existing streamer permissions.',
       missingLabel: 'Stream OAuth is not set.',
       regenLabel: 'Stream OAuth is set but the refresh token is missing.',
     },
@@ -90,18 +95,23 @@
     return cid || FALLBACK_CLIENT_ID;
   }
 
-  function buildImplicitAuthUrl() {
+  function scopesFor(target) {
+    return target.account === 'streamer' ? STREAMER_SCOPES : SCOPES;
+  }
+
+  function buildImplicitAuthUrl(target) {
+    const scopes = scopesFor(target);
     return (
       'https://id.twitch.tv/oauth2/authorize' +
       '?client_id=' + encodeURIComponent(clientId()) +
       '&redirect_uri=' + encodeURIComponent(REDIRECT_URI) +
       '&response_type=token' +
-      '&scope=' + SCOPES.map(encodeURIComponent).join('+')
+      '&scope=' + scopes.map(encodeURIComponent).join('+')
     );
   }
 
-  function buildDeviceRequest() {
-    return { clientId: clientId(), scopes: SCOPES };
+  function buildDeviceRequest(target) {
+    return { clientId: clientId(), scopes: scopesFor(target) };
   }
 
   function normalizeToken(rawToken) {
@@ -163,7 +173,7 @@
 
     const info = result.data || {};
     const granted = Array.isArray(info.scopes) ? info.scopes : [];
-    const missingScopes = SCOPES.filter((scope) => !granted.includes(scope));
+    const missingScopes = scopesFor(target).filter((scope) => !granted.includes(scope));
 
     const lines = [];
     lines.push('✔ Valid token — authorized as "' + (info.login || info.user_id || 'unknown') + '"');
@@ -216,7 +226,7 @@
 
     if (window.electronAPI && typeof window.electronAPI.openOAuthWindow === 'function') {
       try {
-        const result = await window.electronAPI.openOAuthWindow(buildDeviceRequest());
+        const result = await window.electronAPI.openOAuthWindow(buildDeviceRequest(target));
         if (result && result.ok && result.token) {
           await handleCapturedToken(target, result.token, result.refreshToken);
         } else if (result && result.canceled) {
@@ -240,7 +250,7 @@
     // Plain-browser fallback: popup + paste (the redirect URL cannot be read
     // cross-origin, so the user copies the token from the address bar — the
     // same manual step generate_token.py walks through).
-    openPopupFallback(target, buildImplicitAuthUrl());
+    openPopupFallback(target, buildImplicitAuthUrl(target));
   }
 
   function openPopupFallback(target, url) {

@@ -76,6 +76,12 @@ async function loadView({ htmlPath, cssPath, jsPath, viewId }) {
     return response.text();
   });
 
+  if (appState.activeView) {
+    window.dispatchEvent(new CustomEvent('app:view-will-change', {
+      detail: { from: appState.activeView, to: key },
+    }));
+  }
+
   root.innerHTML = html;
   root.dataset.viewKey = key;
 
@@ -109,29 +115,22 @@ async function loadView({ htmlPath, cssPath, jsPath, viewId }) {
     appState.activeCss = link;
   }
 
-  if (appState.activeScript) {
-    appState.activeScript.remove();
-    appState.activeScript = null;
-  }
-
   if (jsPath) {
     const jsKey = `${key}:${jsPath}`;
-    const existingScript = appState.loadedScripts.get(jsKey);
-    if (existingScript) {
-      existingScript.remove();
+    let script = appState.loadedScripts.get(jsKey);
+    if (!script) {
+      script = document.createElement('script');
+      script.src = `${jsPath}?t=${Date.now()}`;
+      script.dataset.viewKey = key;
+      document.head.appendChild(script);
+
+      await new Promise((resolve, reject) => {
+        script.onload = resolve;
+        script.onerror = () => reject(new Error(`Failed to load ${jsPath}`));
+      });
+
+      appState.loadedScripts.set(jsKey, script);
     }
-
-    const script = document.createElement('script');
-    script.src = `${jsPath}?t=${Date.now()}`;
-    script.dataset.viewKey = key;
-    document.head.appendChild(script);
-
-    await new Promise((resolve, reject) => {
-      script.onload = resolve;
-      script.onerror = () => reject(new Error(`Failed to load ${jsPath}`));
-    });
-
-    appState.loadedScripts.set(jsKey, script);
     appState.activeScript = script;
   }
 

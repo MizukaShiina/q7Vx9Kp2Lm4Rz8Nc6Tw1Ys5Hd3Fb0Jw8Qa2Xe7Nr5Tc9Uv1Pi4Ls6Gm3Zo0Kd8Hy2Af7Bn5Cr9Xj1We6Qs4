@@ -1,0 +1,148 @@
+<section class="user-events-page" id="user-events-page">
+  <div class="user-events-intro">
+    <div>
+      <p class="user-events-kicker">TWITCH INTERACTION STUDIO</p>
+      <h3>Polls &amp; predictions</h3>
+      <p class="user-events-copy">Launch audience choices, follow results live, and close out the moment when it’s time.</p>
+    </div>
+    <div class="user-events-connection" id="user-events-connection" data-state="offline">
+      <span class="user-events-connection__dot"></span>
+      <span id="user-events-connection-label">Waiting for bot</span>
+    </div>
+  </div>
+
+  <div class="user-events-columns">
+    <article class="event-column event-column--poll" aria-labelledby="poll-column-title">
+      <header class="event-column__header">
+        <div class="event-column__icon" aria-hidden="true">◉</div>
+        <div>
+          <p class="event-column__eyebrow">AUDIENCE VOTE</p>
+          <h4 id="poll-column-title">Polls</h4>
+        </div>
+        <span class="event-status" id="poll-status">Ready</span>
+      </header>
+
+      <section class="event-panel event-create-panel">
+        <div class="event-panel__heading">
+          <div>
+            <p class="panel-label">Create a poll</p>
+            <h5>Ask the chat</h5>
+          </div>
+        </div>
+        <form id="poll-form" class="event-form">
+          <label class="event-field">
+            <span>Question <small>60 characters max</small></span>
+            <input id="poll-question" name="question" type="text" maxlength="60" required placeholder="What should we do next?" autocomplete="off">
+          </label>
+          <div class="event-field">
+            <div class="event-field__label"><span>Choices</span><small>2–5 · 25 characters each</small></div>
+            <div class="event-choice-list" id="poll-choice-list"></div>
+            <button class="event-add-choice" type="button" data-add-choice="poll">＋ Add choice</button>
+          </div>
+          <div class="event-form__row">
+            <label class="event-field event-field--duration">
+              <span>Duration <small>15–1800 seconds</small></span>
+              <input id="poll-duration" type="number" min="15" max="1800" step="1" value="60" required>
+            </label>
+            <label class="event-field event-field--template">
+              <span>Start from template <small>Saved on this device</small></span>
+              <select id="poll-template-select">
+                <option value="">Choose a template…</option>
+              </select>
+            </label>
+          </div>
+          <div class="event-form__actions">
+            <button class="event-button event-button--primary" type="submit" id="poll-create-button">Start poll <span aria-hidden="true">↗</span></button>
+            <button class="event-button event-button--quiet" type="button" id="poll-save-template">Save as template</button>
+            <button class="event-button event-button--danger hidden" type="button" id="poll-delete-template">Delete selected</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="event-panel event-current-panel" aria-live="polite">
+        <div class="event-panel__heading">
+          <div>
+            <p class="panel-label">On air</p>
+            <h5>Current poll</h5>
+          </div>
+          <span class="live-indicator" id="poll-live-indicator"><i></i> No active poll</span>
+        </div>
+        <div id="poll-active-content" class="event-active-content"></div>
+      </section>
+
+      <section class="event-panel event-recent-panel">
+        <div class="event-panel__heading">
+          <div>
+            <p class="panel-label">From Twitch</p>
+            <h5>Recent polls</h5>
+          </div>
+          <span class="event-count" id="poll-recent-count">0 / 5</span>
+        </div>
+        <div id="poll-recent-list" class="event-recent-list"></div>
+      </section>
+    </article>
+
+    <article class="event-column event-column--prediction" aria-labelledby="prediction-column-title">
+      <header class="event-column__header">
+        <div class="event-column__icon" aria-hidden="true">✦</div>
+        <div>
+          <p class="event-column__eyebrow">CHANNEL POINTS</p>
+          <h4 id="prediction-column-title">Predictions</h4>
+        </div>
+        <span class="event-status" id="prediction-status">Ready</span>
+      </header>
+
+      <section class="event-panel event-create-panel">
+        <div class="event-panel__heading">
+          <div>
+            <p class="panel-label">Create a prediction</p>
+            <h5>Let chat call it</h5>
+          </div>
+        </div>
+        <form id="prediction-form" class="event-form">
+          <label class="event-field">
+            <span>Prediction <small>45 characters max</small></span>
+            <input id="prediction-title" name="title" type="text" maxlength="45" required placeholder="Who will win this round?" autocomplete="off">
+          </label>
+          <div class="event-field">
+            <div class="event-field__label"><span>Outcomes</span><small>2–10 · 25 characters each</small></div>
+            <div class="event-choice-list" id="prediction-choice-list"></div>
+            <button class="event-add-choice" type="button" data-add-choice="prediction">＋ Add outcome</button>
+          </div>
+          <label class="event-field event-field--duration">
+            <span>Prediction window <small>30–1800 seconds</small></span>
+            <input id="prediction-duration" type="number" min="30" max="1800" step="1" value="60" required>
+          </label>
+          <div class="event-form__actions">
+            <button class="event-button event-button--primary" type="submit" id="prediction-create-button">Start prediction <span aria-hidden="true">↗</span></button>
+          </div>
+        </form>
+      </section>
+
+      <section class="event-panel event-current-panel" aria-live="polite">
+        <div class="event-panel__heading">
+          <div>
+            <p class="panel-label">On air</p>
+            <h5>Current prediction</h5>
+          </div>
+          <span class="live-indicator" id="prediction-live-indicator"><i></i> No active prediction</span>
+        </div>
+        <div id="prediction-active-content" class="event-active-content"></div>
+      </section>
+
+      <section class="event-panel event-recent-panel">
+        <div class="event-panel__heading">
+          <div>
+            <p class="panel-label">From Twitch</p>
+            <h5>Recent predictions</h5>
+          </div>
+          <span class="event-count" id="prediction-recent-count">0 / 5</span>
+        </div>
+        <div id="prediction-recent-list" class="event-recent-list"></div>
+      </section>
+    </article>
+  </div>
+
+  <p class="user-events-footnote">Event results sync from Twitch. Poll templates are stored locally in this WebUI for now.</p>
+  <div class="user-events-toast" id="user-events-toast" role="status" aria-live="polite"></div>
+</section>

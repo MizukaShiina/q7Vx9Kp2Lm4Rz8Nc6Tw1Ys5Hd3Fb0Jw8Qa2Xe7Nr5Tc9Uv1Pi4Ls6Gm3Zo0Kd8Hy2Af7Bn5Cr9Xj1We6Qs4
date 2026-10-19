@@ -41,6 +41,10 @@ const pageMeta = {
     subtitle: 'Giveaway flow, prizes, and participation tracking.',
     summary: 'Prepare the live giveaway experience and monitor its state at a glance.',
   },
+  userevents: {
+    subtitle: 'Create polls and predictions, then track live results.',
+    summary: 'Manage Twitch audience interactions from one live control surface.',
+  },
   responses: {
     subtitle: 'Response templates and live reply management.',
     summary: 'Keep favourite replies ready while tracking the latest interaction patterns.',
@@ -89,6 +93,7 @@ registerPage({ id: 'announcement', name: 'Announcement', icon: '✦', path: './u
 registerPage({ id: 'commands', name: 'Commands', icon: '⌘', path: './ui/pages/commands/index.html', cssPath: './ui/pages/commands/style.css', jsPath: './ui/pages/commands/script.js', sensitive: false, group: 'stream' });
 registerPage({ id: 'streamdeck', name: 'Stream Deck', icon: '▦', path: './ui/pages/streamdeck/index.html', cssPath: './ui/pages/streamdeck/style.css', jsPath: './ui/pages/streamdeck/script.js', sensitive: false, group: 'stream' });
 registerPage({ id: 'giveaway', name: 'Giveaway', icon: '🎁', path: './ui/pages/giveaway/index.html', cssPath: './ui/pages/giveaway/style.css', jsPath: './ui/pages/giveaway/script.js', sensitive: false, group: 'stream' });
+registerPage({ id: 'userevents', name: 'User Events', icon: '✦', path: './ui/pages/userevents/index.html', cssPath: './ui/pages/userevents/style.css', jsPath: './ui/pages/userevents/script.js', preScripts: ['./ui/pages/userevents/templates.js'], sensitive: false, group: 'stream' });
 registerPage({ id: 'responses', name: 'Responses', icon: '↺', path: './ui/pages/responses/index.html', cssPath: './ui/pages/responses/style.css', jsPath: './ui/pages/responses/script.js', sensitive: false, group: 'stream' });
 // registerPage({ id: 'stream-dashboard', name: 'Stream Dashboard', icon: '◍', path: './ui/pages/stream-dashboard/index.html', jsPath: './ui/pages/stream-dashboard/script.js', sensitive: false, group: 'main' });
 // registerPage({ id: 'obs', name: 'OBS', icon: '◎', path: './ui/pages/obs/index.html', jsPath: './ui/pages/obs/script.js', sensitive: false, group: 'stream' });
@@ -482,6 +487,7 @@ async function loadPageScript(page, { forceReload = false } = {}) {
 
 async function preloadPage(page, { forceReload = false } = {}) {
   let pageElement = pageCache.get(page.id);
+  const host = document.getElementById('page-host');
 
   // If forcing a reload, throw away the cached HTML.
   if (forceReload && pageElement) {
@@ -508,10 +514,13 @@ async function preloadPage(page, { forceReload = false } = {}) {
 
     pageCache.set(page.id, pageElement);
 
-    const host = document.getElementById('page-host');
     if (host) {
       host.appendChild(pageElement);
     }
+  } else if (host && pageElement.parentElement !== host) {
+    // The outer app shell is replaced when disconnecting to the login view.
+    // Preserve cached page nodes and attach them to the new dashboard host.
+    host.appendChild(pageElement);
   }
 
   // CSS and JS are loaded before the page is ever shown.
@@ -704,12 +713,14 @@ function wireDashboardActions() {
 
 // Ctrl+Alt+T -> jump to the hidden Overlay Test page.
 function wireOverlayTestShortcut() {
-  document.addEventListener('keydown', (event) => {
+  const handleKeydown = (event) => {
     if (event.ctrlKey && event.altKey && (event.key === 't' || event.key === 'T')) {
       event.preventDefault();
       activatePage('test');
     }
-  });
+  };
+  document.addEventListener('keydown', handleKeydown);
+  return () => document.removeEventListener('keydown', handleKeydown);
 }
 
 // Allow pages to register header actions with the dashboard.
@@ -760,38 +771,57 @@ document.addEventListener('page:header', (ev) => {
   }
 });
 
+window.addEventListener('app:view-will-change', (event) => {
+  const { from, to } = event.detail || {};
+  if (from === 'dashboard' && to !== 'dashboard') {
+    window.__dashboardCleanup?.();
+  }
+});
+
 async function initializeDashboard() {
   const shell = document.querySelector('.dashboard-shell');
   if (!shell) return;
   if (shell.dataset.initialized === 'true') return;
 
+  window.__dashboardCleanup?.();
+
   shell.dataset.initialized = 'true';
+  const cleanupTasks = [];
+  window.__dashboardCleanup = () => {
+    cleanupTasks.splice(0).forEach((cleanup) => {
+      try { cleanup(); } catch (_error) { /* best-effort teardown */ }
+    });
+    window.__dashboardCleanup = null;
+  };
 
   renderSidebar();
   wireDashboardActions();
   wireServiceDisclosures();
-  wireOverlayTestShortcut();
+  cleanupTasks.push(wireOverlayTestShortcut());
 
   if (window.connection?.getConnectionState) {
     window.addEventListener('connection:state', updateConnectionStatusPill);
+    cleanupTasks.push(() => window.removeEventListener('connection:state', updateConnectionStatusPill));
   }
 
   // Subscribe to state changes for dynamic updates
   if (window.state) {
-    window.state.subscribe(() => {
+    const unsubscribe = window.state.subscribe(() => {
       updateBotStatusPanel();
       updateDiscordDetails();
       updateConnectionStatusPill();
     });
+    if (typeof unsubscribe === 'function') cleanupTasks.push(unsubscribe);
   }
 
   // Forward database credentials to Electron main process for direct Postgres
   if (window.electronAPI?.setDatabaseState) {
-    window.state.subscribe(() => {
+    const unsubscribe = window.state.subscribe(() => {
       if (window.state.database) {
         window.electronAPI.setDatabaseState(window.state.database.toObject());
       }
     });
+    if (typeof unsubscribe === 'function') cleanupTasks.push(unsubscribe);
     // Push initial state if already populated
     if (window.state.database) {
       window.electronAPI.setDatabaseState(window.state.database.toObject());
@@ -801,7 +831,8 @@ async function initializeDashboard() {
   // Initial panel updates
   updateBotStatusPanel();
   updateOverlayStatusPanel();
-  window.setInterval(updateOverlayStatusPanel, 2500);
+  const overlayStatusTimer = window.setInterval(updateOverlayStatusPanel, 2500);
+  cleanupTasks.push(() => window.clearInterval(overlayStatusTimer));
   updateDiscordDetails();
   updateConnectionStatusPill();
 
