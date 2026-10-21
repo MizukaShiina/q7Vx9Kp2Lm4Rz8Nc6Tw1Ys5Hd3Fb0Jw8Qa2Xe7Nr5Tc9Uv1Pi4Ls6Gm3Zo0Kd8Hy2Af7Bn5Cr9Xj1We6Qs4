@@ -12,28 +12,13 @@ window.__viewBootstrapRegistry = window.__viewBootstrapRegistry || {};
 import './update.js';
 import { configureConnection, startConnection, getBridge, getConnectionState, subscribeToConnectionState, subscribeToOverlayEvents, getDefaultConnectionUrl } from './connection/connection.js';
 import { state } from './connection/state.js';
+import { resolveBotUrl } from './connection/discover.js';
 
-// Configure connection with fallback
-// Primary: Cloudflare tunnel (will be provided by server)
-// Fallback: Local server
-configureConnection(
-  getDefaultConnectionUrl()
-);
-
-// Start connection
-startConnection();
-
-// Relay bot overlay_signal packets to the local overlay server (Electron main).
-// In a plain browser this is a no-op (no server can be hosted in a renderer).
-subscribeToOverlayEvents((overlayEvent) => {
-  if (window.electronAPI?.sendOverlaySignal) {
-    window.electronAPI.sendOverlaySignal(overlayEvent);
-  } else {
-    console.log('[OverlayRelay] overlay event (browser mode, not relayed):', overlayEvent.event);
-  }
-});
-
-// Expose connection utilities globally for pages
+// Expose connection utilities globally for pages.
+// Published SYNCHRONOUSLY at module load: page scripts check for these globals
+// (direct-access bootstraps guard on `!window.state || !window.connection`),
+// and getConnectionState() already reports "Disconnected" while no bridge is
+// configured yet - so pages must never observe these as missing.
 window.connection = {
   getBridge,
   isConnected: () => getBridge()?.connected ?? false,
@@ -45,25 +30,66 @@ window.connection = {
 // Expose state globally for pages
 window.state = state;
 
-let hadAuthenticatedSession = false;
-let redirectingToLogin = false;
-
-subscribeToConnectionState((connectionState) => {
-  if (connectionState.authenticated) {
-    hadAuthenticatedSession = true;
-    return;
+// Resolve the bot endpoint asynchronously (?ws= override > saved URL >
+// localhost fast path > derived page-hostname URL > LAN scan), then configure
+// the bridge exactly ONCE. Setting window.MIZUBOT_WS_URL here makes every
+// later `configureConnection(getDefaultConnectionUrl())` call (config,
+// credentials, giveaway pages) resolve to the same URL instead of
+// re-deriving a potentially wrong one.
+async function bootstrapConnection() {
+  try {
+    const botUrl = await resolveBotUrl();
+    if (botUrl) {
+      window.MIZUBOT_WS_URL = botUrl;
+      console.log('[Connection] Bot endpoint resolved:', botUrl);
+    }
+  } catch (error) {
+    console.error('[Connection] Bot endpoint discovery failed:', error);
   }
 
-  if (!connectionState.connected && hadAuthenticatedSession && !redirectingToLogin) {
-    hadAuthenticatedSession = false;
-    redirectingToLogin = true;
-    window.app.showLogin()
-      .catch((error) => console.error('Unable to return to login after disconnect:', error))
-      .finally(() => {
-        redirectingToLogin = false;
-      });
-  }
-});
+  // Configure connection with the resolved URL (never empty - discovery
+  // falls back to the derived default, whose retry loop takes over).
+  configureConnection(
+    getDefaultConnectionUrl()
+  );
+
+  // Start connection
+  startConnection();
+
+  // Relay bot overlay_signal packets to the local overlay server (Electron main).
+  // In a plain browser this is a no-op (no server can be hosted in a renderer).
+  subscribeToOverlayEvents((overlayEvent) => {
+    if (window.electronAPI?.sendOverlaySignal) {
+      window.electronAPI.sendOverlaySignal(overlayEvent);
+    } else {
+      console.log('[OverlayRelay] overlay event (browser mode, not relayed):', overlayEvent.event);
+    }
+  });
+
+  // Return to the login page when an authenticated session drops.
+  let hadAuthenticatedSession = false;
+  let redirectingToLogin = false;
+
+  subscribeToConnectionState((connectionState) => {
+    if (connectionState.authenticated) {
+      hadAuthenticatedSession = true;
+      return;
+    }
+
+    if (!connectionState.connected && hadAuthenticatedSession && !redirectingToLogin) {
+      hadAuthenticatedSession = false;
+      redirectingToLogin = true;
+      window.app.showLogin()
+        .catch((error) => console.error('Unable to return to login after disconnect:', error))
+        .finally(() => {
+          redirectingToLogin = false;
+        });
+    }
+  });
+}
+
+bootstrapConnection();
+
 
 async function loadView({ htmlPath, cssPath, jsPath, viewId }) {
   const root = document.getElementById('app');

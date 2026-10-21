@@ -77,6 +77,14 @@ export function configureConnection(url, fallback = null) {
         fallbackUrl = normalizedFallback;
     }
     
+    // Tear down any previous bridge so re-configuring (direct page access,
+    // page bootstraps) never leaves a second live socket + reconnect loop
+    // running alongside the new one.
+    if (bridge) {
+        bridge.disconnect();
+        bridge = null;
+    }
+    
     // Create bridge instance
     bridge = new WebSocketBridge(primaryUrl, fallbackUrl);
     
