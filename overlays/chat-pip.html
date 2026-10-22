@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MizuBot Desktop Chat PiP</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; }
+    body {
+      overflow: hidden;
+      background: transparent;
+      color: #fff;
+      font-family: Inter, "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    #chat-container {
+      display: flex;
+      width: 100%;
+      height: 100%;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: flex-start;
+      gap: 5px;
+      padding: 14px;
+      overflow: hidden;
+    }
+    .chat-line {
+      max-width: 100%;
+      color: #f3f1f7;
+      font-size: clamp(14px, 4.8vh, 22px);
+      font-weight: 600;
+      line-height: 1.38;
+      overflow-wrap: anywhere;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, .98), 1px 0 3px rgba(0, 0, 0, .95), -1px 0 3px rgba(0, 0, 0, .95);
+      animation: message-in 160ms ease-out both;
+    }
+    .chat-line__username {
+      margin-right: .42em;
+      font-weight: 850;
+    }
+    .chat-line__message { white-space: pre-wrap; }
+    .emote {
+      height: 1.25em;
+      margin: -.2em .1em .1em;
+      vertical-align: middle;
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .72));
+    }
+    @keyframes message-in {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .chat-line { animation: none; }
+    }
+  </style>
+</head>
+<body>
+  <main id="chat-container" aria-live="polite" aria-label="Recent Twitch chat"></main>
+  <script src="script.js"></script>
+  <script>
+    (() => {
+      const MAX_VISIBLE_MESSAGES = 10;
+      const container = document.getElementById('chat-container');
+      const relayUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + (location.host || '127.0.0.1:8766');
+      const client = new OverlayWebSocketClient(relayUrl, 'chat-pip-status', 'CHAT PIP');
+
+      function isSafeColor(value) {
+        return typeof value === 'string' && /^(#[\da-f]{3,8}|[a-z]{1,20})$/i.test(value.trim());
+      }
+
+      function addMessage(data) {
+        if (!data || typeof data !== 'object') return;
+
+        const line = document.createElement('div');
+        line.className = 'chat-line';
+
+        const username = document.createElement('span');
+        username.className = 'chat-line__username';
+        username.textContent = typeof data.user === 'string' && data.user ? data.user : 'Viewer';
+        username.style.color = isSafeColor(data.color) ? data.color.trim() : '#c8a5ff';
+
+        const message = document.createElement('span');
+        message.className = 'chat-line__message';
+        // The bot formats message HTML to include emote images; retain that payload as the existing overlay does.
+        message.innerHTML = typeof data.message === 'string' ? data.message : '';
+
+        line.append(username, message);
+        container.appendChild(line);
+
+        while (container.children.length > MAX_VISIBLE_MESSAGES) {
+          container.firstElementChild?.remove();
+        }
+      }
+
+      client.registerHandler('chat_msg', addMessage);
+      client.connect();
+    })();
+  </script>
+</body>
+</html>

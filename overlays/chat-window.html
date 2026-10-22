@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MizuBot Chat</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root { color-scheme: dark; font-family: Inter, "Segoe UI", sans-serif; background: #100e14; color: #f5f1fa; }
+    html, body { width: 100%; height: 100%; margin: 0; }
+    body { display: flex; flex-direction: column; min-width: 280px; background: radial-gradient(ellipse at 10% 0, rgba(145,70,255,.14), transparent 38%), #100e14; }
+    .chat-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; padding: 7px 9px 7px 13px; border-bottom: 1px solid rgba(195,164,229,.16); background: rgba(18,15,24,.96); -webkit-app-region: drag; user-select: none; }
+    .chat-brand { display: flex; min-width: 0; align-items: center; gap: 10px; }
+    .chat-brand__icon { display: grid; width: 27px; height: 27px; flex: 0 0 auto; place-items: center; border: 1px solid rgba(145,70,255,.4); border-radius: 8px; background: rgba(145,70,255,.16); color: #d7baff; }
+    .chat-brand__title { overflow: hidden; font-size: 12px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+    .chat-brand__subtitle { margin-top: 2px; color: #a59bac; font-size: 9px; }
+    .chat-head-actions { display: flex; align-items: center; gap: 7px; -webkit-app-region: no-drag; }
+    .chat-status { display: inline-flex; align-items: center; gap: 6px; color: #a59bac; font: 10px ui-monospace, Consolas, monospace; white-space: nowrap; }
+    .chat-status::before { width: 7px; height: 7px; border-radius: 50%; background: #fbbf24; content: ""; }
+    .chat-status.is-connected { color: #8de5ab; }
+    .chat-status.is-connected::before { background: #4ade80; }
+    .chat-status.is-offline { color: #ff9aab; }
+    .chat-status.is-offline::before { background: #fb7185; }
+    button { border: 1px solid rgba(255,255,255,.12); border-radius: 7px; padding: 6px 9px; background: rgba(255,255,255,.045); color: #d7d1df; font: 600 10px "Segoe UI", sans-serif; cursor: pointer; }
+    button:hover { border-color: rgba(190,145,255,.55); color: #fff; }
+    .window-control { display: grid; width: 29px; height: 28px; place-items: center; padding: 0; border-color: transparent; background: transparent; color: #aaa4b4; font-size: 13px; }
+    .window-control:hover { background: rgba(255,255,255,.09); }
+    .window-control--close:hover { border-color: rgba(248,113,113,.22); background: rgba(248,113,113,.18); color: #fff; }
+    .chat-settings { padding: 12px 14px; border-bottom: 1px solid rgba(195,164,229,.12); background: rgba(13,11,18,.97); }
+    .chat-settings[hidden] { display: none; }
+    .chat-settings__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 18px; }
+    .chat-setting { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 5px 10px; min-width: 0; color: #c8c1d1; font-size: 10px; }
+    .chat-setting output { color: #c9a6ff; font: 10px ui-monospace, Consolas, monospace; }
+    .chat-setting input[type="range"] { grid-column: 1 / -1; width: 100%; accent-color: #a56bff; }
+    .chat-setting--check { display: flex; gap: 7px; }
+    .chat-setting--check input { accent-color: #a56bff; }
+    .chat-feed { display: flex; flex: 1; flex-direction: column; gap: 9px; min-height: 0; padding: 12px; overflow: auto; scrollbar-color: rgba(255,255,255,.2) transparent; }
+    .chat-empty { display: grid; flex: 1; place-items: center; color: #8f8799; font-size: 12px; text-align: center; }
+    .chat-empty[hidden] { display: none; }
+    .chat-message { position: relative; width: fit-content; max-width: 100%; padding: 10px 12px 11px; overflow-wrap: anywhere; border: 1px solid rgba(190,161,225,.2); border-left: 3px solid var(--user-color,#9146ff); border-radius: 11px; background: linear-gradient(110deg,rgba(24,21,31,var(--bubble-opacity,.94)),rgba(30,23,40,var(--bubble-opacity,.94))); box-shadow: 0 5px 16px rgba(0,0,0,.2); }
+    .chat-message:first-of-type { margin-top: auto; }
+    .chat-message__header { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
+    .chat-message__username { color: var(--user-color,#c8a5ff); font-size: calc(var(--chat-font-size, 13px) - 1px); font-weight: 850; overflow-wrap: anywhere; }
+    .chat-message__time { margin-left: auto; color: #8f8799; font: 9px ui-monospace, Consolas, monospace; }
+    .chat-message__body { color: #f0edf3; font-size: var(--chat-font-size, 13px); line-height: 1.45; }
+    .badge { width: 17px; height: 17px; object-fit: contain; }
+    .emote { height: 1.2em; margin: -.2em .1em .1em; vertical-align: middle; }
+    .chat-jump { position: absolute; right: 15px; bottom: 14px; z-index: 1; padding: 8px 11px; border-color: rgba(145,70,255,.45); background: #282034; color: #e4d2ff; }
+    .chat-jump[hidden] { display: none; }
+    body[data-show-timestamps="false"] .chat-message__time,
+    body[data-show-badges="false"] .badge { display: none; }
+    @media (max-width: 440px) { .chat-settings__grid { grid-template-columns: 1fr; } .chat-status { display: none; } }
+  </style>
+</head>
+<body>
+  <header class="chat-header" id="chat-titlebar">
+    <div class="chat-brand">
+      <span class="chat-brand__icon" aria-hidden="true">◉</span>
+      <div><div class="chat-brand__title">MizuBot Chat</div><div class="chat-brand__subtitle" id="chat-count">Waiting for messages</div></div>
+    </div>
+    <div class="chat-head-actions">
+      <span class="chat-status" id="chat-status">Connecting</span>
+      <button id="chat-settings-toggle" type="button" title="Display settings" aria-expanded="false">⚙</button>
+      <button id="chat-clear" type="button" title="Clear visible message history">Clear</button>
+      <button class="window-control" id="chat-minimize" type="button" title="Minimize">−</button>
+      <button class="window-control" id="chat-maximize" type="button" title="Maximize / restore">□</button>
+      <button class="window-control window-control--close" id="chat-close" type="button" title="Close">×</button>
+    </div>
+  </header>
+  <section class="chat-settings" id="chat-settings" aria-label="Chat display settings" hidden>
+    <div class="chat-settings__grid">
+      <label class="chat-setting" for="chat-font-size"><span>Message size</span><output id="chat-font-value">13 px</output><input id="chat-font-size" type="range" min="11" max="22" value="13"></label>
+      <label class="chat-setting" for="chat-opacity"><span>Message background</span><output id="chat-opacity-value">94%</output><input id="chat-opacity" type="range" min="40" max="100" value="94"></label>
+      <label class="chat-setting chat-setting--check" for="chat-show-timestamps"><input id="chat-show-timestamps" type="checkbox" checked><span>Show timestamps</span></label>
+      <label class="chat-setting chat-setting--check" for="chat-show-badges"><input id="chat-show-badges" type="checkbox" checked><span>Show badges</span></label>
+    </div>
+  </section>
+  <main class="chat-feed" id="chat-feed" role="log" aria-live="polite" aria-label="Twitch chat">
+    <div class="chat-empty" id="chat-empty">Waiting for chat messages…</div>
+  </main>
+  <button class="chat-jump" id="chat-jump" type="button" hidden>↓ New messages</button>
+  <script src="script.js"></script>
+  <script>
+    (() => {
+      const MAX_MESSAGES = 500;
+      const container = document.getElementById('chat-feed');
+      const empty = document.getElementById('chat-empty');
+      const status = document.getElementById('chat-status');
+      const count = document.getElementById('chat-count');
+      const jump = document.getElementById('chat-jump');
+      const settingsPanel = document.getElementById('chat-settings');
+      const settingsToggle = document.getElementById('chat-settings-toggle');
+      const fontSize = document.getElementById('chat-font-size');
+      const opacity = document.getElementById('chat-opacity');
+      const showTimestamps = document.getElementById('chat-show-timestamps');
+      const showBadges = document.getElementById('chat-show-badges');
+      const preferencesKey = 'mizubot:chat-window:display:v1';
+      const defaultPreferences = { fontSize: 13, opacity: 94, timestamps: true, badges: true };
+      let messageCount = 0;
+      let followLatest = true;
+
+      function readPreferences() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(preferencesKey) || '{}');
+          return {
+            fontSize: Math.max(11, Math.min(22, Number(saved.fontSize) || defaultPreferences.fontSize)),
+            opacity: Math.max(40, Math.min(100, Number(saved.opacity) || defaultPreferences.opacity)),
+            timestamps: saved.timestamps !== false,
+            badges: saved.badges !== false,
+          };
+        } catch {
+          return { ...defaultPreferences };
+        }
+      }
+
+      let preferences = readPreferences();
+      function applyPreferences() {
+        document.body.style.setProperty('--chat-font-size', `${preferences.fontSize}px`);
+        document.body.style.setProperty('--bubble-opacity', String(preferences.opacity / 100));
+        document.body.dataset.showTimestamps = String(preferences.timestamps);
+        document.body.dataset.showBadges = String(preferences.badges);
+        fontSize.value = String(preferences.fontSize);
+        opacity.value = String(preferences.opacity);
+        showTimestamps.checked = preferences.timestamps;
+        showBadges.checked = preferences.badges;
+        document.getElementById('chat-font-value').textContent = `${preferences.fontSize} px`;
+        document.getElementById('chat-opacity-value').textContent = `${preferences.opacity}%`;
+        try { localStorage.setItem(preferencesKey, JSON.stringify(preferences)); } catch { /* storage may be unavailable */ }
+      }
+
+      function setConnected(connected) {
+        status.classList.toggle('is-connected', connected);
+        status.classList.toggle('is-offline', !connected);
+        status.textContent = connected ? 'LIVE' : 'RECONNECTING';
+      }
+
+      function atBottom() {
+        return container.scrollHeight - container.scrollTop - container.clientHeight < 48;
+      }
+
+      function addMessage(data) {
+        const shouldFollow = followLatest || atBottom();
+        empty.hidden = true;
+        const message = document.createElement('article');
+        message.className = 'chat-message';
+        message.style.setProperty('--user-color', data?.color || '#9146ff');
+
+        const header = document.createElement('div');
+        header.className = 'chat-message__header';
+        (Array.isArray(data?.badges) ? data.badges : []).forEach((url) => {
+          if (typeof url !== 'string') return;
+          const badge = document.createElement('img');
+          badge.className = 'badge';
+          badge.src = url;
+          badge.alt = '';
+          badge.loading = 'lazy';
+          header.appendChild(badge);
+        });
+        const username = document.createElement('span');
+        username.className = 'chat-message__username';
+        username.textContent = data?.user || 'Viewer';
+        header.appendChild(username);
+        const time = document.createElement('time');
+        time.className = 'chat-message__time';
+        const timestamp = Number(data?.timestamp);
+        time.textContent = Number.isFinite(timestamp) && timestamp > 0
+          ? new Date(timestamp < 1e12 ? timestamp * 1000 : timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+          : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        header.appendChild(time);
+
+        const body = document.createElement('div');
+        body.className = 'chat-message__body';
+        // The bot supplies formatted message HTML for emotes; this mirrors the existing overlay renderer.
+        body.innerHTML = typeof data?.message === 'string' ? data.message : '';
+        message.append(header, body);
+        container.appendChild(message);
+        while (container.querySelectorAll('.chat-message').length > MAX_MESSAGES) {
+          container.querySelector('.chat-message')?.remove();
+        }
+        messageCount = container.querySelectorAll('.chat-message').length;
+        count.textContent = `${messageCount.toLocaleString()} message${messageCount === 1 ? '' : 's'} · retained`;
+        if (shouldFollow) {
+          container.scrollTop = container.scrollHeight;
+          jump.hidden = true;
+        } else {
+          jump.hidden = false;
+        }
+      }
+
+      container.addEventListener('scroll', () => {
+        followLatest = atBottom();
+        if (followLatest) jump.hidden = true;
+      });
+      jump.addEventListener('click', () => {
+        followLatest = true;
+        container.scrollTop = container.scrollHeight;
+        jump.hidden = true;
+      });
+      document.getElementById('chat-clear').addEventListener('click', () => {
+        container.querySelectorAll('.chat-message').forEach((message) => message.remove());
+        messageCount = 0;
+        count.textContent = 'Waiting for messages';
+        empty.hidden = false;
+        jump.hidden = true;
+      });
+
+      settingsToggle.addEventListener('click', () => {
+        const opening = settingsPanel.hidden;
+        settingsPanel.hidden = !opening;
+        settingsToggle.setAttribute('aria-expanded', String(opening));
+      });
+      fontSize.addEventListener('input', () => {
+        preferences.fontSize = Number(fontSize.value);
+        applyPreferences();
+      });
+      opacity.addEventListener('input', () => {
+        preferences.opacity = Number(opacity.value);
+        applyPreferences();
+      });
+      showTimestamps.addEventListener('change', () => {
+        preferences.timestamps = showTimestamps.checked;
+        applyPreferences();
+      });
+      showBadges.addEventListener('change', () => {
+        preferences.badges = showBadges.checked;
+        applyPreferences();
+      });
+
+      const windowApi = window.chatWindowAPI;
+      document.getElementById('chat-minimize').addEventListener('click', () => windowApi?.minimize());
+      document.getElementById('chat-maximize').addEventListener('click', () => windowApi?.maximize());
+      document.getElementById('chat-close').addEventListener('click', () => windowApi?.close());
+      document.getElementById('chat-titlebar').addEventListener('dblclick', (event) => {
+        if (!event.target.closest('button')) windowApi?.maximize();
+      });
+
+      applyPreferences();
+
+      const relayUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + (location.host || '127.0.0.1:8766');
+      const client = new OverlayWebSocketClient(relayUrl, 'chat-status-hook', 'CHAT WINDOW');
+      client.registerHandler('chat_msg', addMessage);
+      client.connect();
+      const originalSetConnected = client.setConnected.bind(client);
+      const originalSetDisconnected = client.setDisconnected.bind(client);
+      client.setConnected = () => { originalSetConnected(); setConnected(true); };
+      client.setDisconnected = () => { originalSetDisconnected(); setConnected(false); };
+    })();
+  </script>
+</body>
+</html>

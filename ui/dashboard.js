@@ -21,6 +21,10 @@ const pageMeta = {
     subtitle: 'Overview of connected systems and quick actions.',
     summary: 'Monitor the active module and keep the stream-control workspace aligned.',
   },
+  chat: {
+    subtitle: 'Persistent chat and desktop PiP placement.',
+    summary: 'Open chat in a dedicated reader or place the transparent overlay over your desktop.',
+  },
   // general: {
   //   subtitle: 'General stream settings and helper toggles.',
   //   summary: 'Coordinate the core controls that shape your broadcasting experience.',
@@ -88,6 +92,7 @@ function registerPage(page) {
 }
 
 registerPage({ id: 'overview', name: 'Overview', icon: '◉', path: './ui/pages/overview/index.html', cssPath: './ui/pages/overview/style.css', jsPath: './ui/pages/overview/script.js', preScripts: ['./ui/pages/database/postgre.js'], sensitive: false, group: 'main' });
+registerPage({ id: 'chat', name: 'Chat', icon: '◉', path: './ui/pages/chat/index.html', cssPath: './ui/pages/chat/style.css', jsPath: './ui/pages/chat/script.js', sensitive: false, group: 'main' });
 // registerPage({ id: 'general', name: 'General', icon: '◌', path: './ui/pages/general/index.html', jsPath: './ui/pages/general/script.js', sensitive: false, group: 'main' });
 registerPage({ id: 'announcement', name: 'Announcement', icon: '✦', path: './ui/pages/announcement/index.html', cssPath: './ui/pages/announcement/style.css', jsPath: './ui/pages/announcement/script.js', sensitive: false, group: 'stream' });
 registerPage({ id: 'commands', name: 'Commands', icon: '⌘', path: './ui/pages/commands/index.html', cssPath: './ui/pages/commands/style.css', jsPath: './ui/pages/commands/script.js', sensitive: false, group: 'stream' });

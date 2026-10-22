@@ -1,0 +1,56 @@
+<section class="page-card chat-control-page" id="chat-control-page">
+  <header class="page-card__header">
+    <div>
+      <p class="panel-label">Desktop chat</p>
+      <h3>Chat windows</h3>
+    </div>
+    <span class="chat-state-pill" id="chat-connection-state" data-state="waiting">Waiting for relay</span>
+  </header>
+  <p class="page-card__description">Open a persistent chat reader, or place the existing transparent chat overlay above your desktop. Both use the same local overlay relay and bot messages as OBS.</p>
+
+  <div class="chat-mode-grid">
+    <article class="chat-mode-card">
+      <div class="chat-mode-card__icon" aria-hidden="true">▤</div>
+      <div class="chat-mode-card__copy">
+        <p class="panel-label">Pop-out window</p>
+        <h4>Persistent chat</h4>
+        <p>A normal resizable window with scrollable message history. Messages stay visible instead of fading away.</p>
+      </div>
+      <button class="primary-button" id="chat-open-window" type="button">Open chat window</button>
+    </article>
+
+    <article class="chat-mode-card chat-mode-card--pip">
+      <div class="chat-mode-card__icon" aria-hidden="true">▣</div>
+      <div class="chat-mode-card__copy">
+        <p class="panel-label">Desktop PiP</p>
+        <h4>Always-on-top overlay</h4>
+        <p>A transparent, taskbar-free window using the existing overlay. It ignores mouse input; manage it here.</p>
+      </div>
+      <label class="chat-toggle">
+        <input id="chat-pip-toggle" type="checkbox" aria-label="Enable desktop PiP chat">
+        <span class="chat-toggle__track" aria-hidden="true"></span>
+        <span id="chat-pip-label">Off</span>
+      </label>
+    </article>
+  </div>
+
+  <section class="chat-layout-card" aria-labelledby="chat-layout-title">
+    <div class="chat-layout-card__header">
+      <div>
+        <p class="panel-label">PiP placement</p>
+        <h4 id="chat-layout-title">Monitor layout</h4>
+        <p class="chat-layout-hint">Drag the chat window to move it. Drag its lower-right handle to resize. Changes are applied live.</p>
+      </div>
+      <span class="chat-layout-size" id="chat-pip-size">—</span>
+    </div>
+    <div class="chat-layout-stage" id="chat-monitor-stage" aria-label="Connected monitor layout">
+      <div class="chat-layout-empty" id="chat-layout-empty">Display information is available in the desktop app.</div>
+    </div>
+    <div class="chat-layout-footer">
+      <span id="chat-layout-status" role="status">Loading display layout…</span>
+      <button class="ghost-button" id="chat-pip-hide" type="button" disabled>Turn PiP off</button>
+    </div>
+  </section>
+
+  <p class="chat-note">The persistent window retains up to 500 messages for as long as it stays open. PiP is a separate desktop window, not an OBS source; whether it appears in a broadcast depends on your OBS capture method. The existing OBS chat overlay remains unchanged.</p>
+</section>
