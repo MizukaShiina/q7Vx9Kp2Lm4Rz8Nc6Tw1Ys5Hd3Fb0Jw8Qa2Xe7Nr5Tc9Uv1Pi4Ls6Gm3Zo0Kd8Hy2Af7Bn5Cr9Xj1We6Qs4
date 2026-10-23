@@ -148,7 +148,11 @@ window.pageControllers.database = function () {
     const st = pg.getStatus() || {};
     if (st.status === 'reconnecting') {
       const configured = st.configured && (st.configured.cloud || st.configured.local);
-      if (!configured) return 'No Postgres URL configured';
+      if (!configured) {
+        return st.lastError ||
+          'Unable to read database config/credentials from server state. Contact the developer.';
+      }
+      if (!st.willRetry) return st.lastError || 'Cloud Postgres connection failed';
       const seconds = Math.round((st.pollIntervalMs || 5000) / 1000);
       return `Reconnecting — retrying every ${seconds}s`;
     }
@@ -769,5 +773,3 @@ window.pageControllers.database = function () {
 };
 
 window.pageControllers.database();
-
-

@@ -4,8 +4,8 @@
 //
 // Responsibilities:
 // - Load the whole database snapshot via window.dbAPI (Electron main process,
-//   which owns the cloud -> local -> 5s-poll connection manager in db.js).
-// - Report connection status (cloud / local / reconnecting / server snapshot).
+//   which owns the server-configured cloud connection manager in db.js).
+// - Report connection status (cloud / reconnecting / server snapshot).
 // - Write path: row-level insert/update/delete and table create/drop, all
 //   forwarded to window.dbAPI (validated + parameterized in db.js).
 //

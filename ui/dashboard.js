@@ -821,16 +821,15 @@ async function initializeDashboard() {
 
   // Forward database credentials to Electron main process for direct Postgres
   if (window.electronAPI?.setDatabaseState) {
-    const unsubscribe = window.state.subscribe(() => {
-      if (window.state.database) {
-        window.electronAPI.setDatabaseState(window.state.database.toObject());
-      }
-    });
+    const pushDatabaseState = () => {
+      const databaseState = window.state?.database;
+      window.electronAPI.setDatabaseState(
+        databaseState ? databaseState.toObject() : null
+      );
+    };
+    const unsubscribe = window.state.subscribe(pushDatabaseState);
     if (typeof unsubscribe === 'function') cleanupTasks.push(unsubscribe);
-    // Push initial state if already populated
-    if (window.state.database) {
-      window.electronAPI.setDatabaseState(window.state.database.toObject());
-    }
+    pushDatabaseState();
   }
 
   // Initial panel updates
