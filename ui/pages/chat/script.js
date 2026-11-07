@@ -10,6 +10,8 @@ window.pageControllers.chat = function () {
   const connectionState = document.getElementById('chat-connection-state');
   const openButton = document.getElementById('chat-open-window');
   const hideButton = document.getElementById('chat-pip-hide');
+  const excludedUsernamesInput = document.getElementById('chat-excluded-usernames');
+  const exclusionsStatus = document.getElementById('chat-exclusions-status');
   const api = window.electronAPI;
   if (!stage) return;
 
@@ -195,6 +197,7 @@ window.pageControllers.chat = function () {
       pipToggle.disabled = true;
       openButton.disabled = true;
       hideButton.disabled = true;
+      excludedUsernamesInput.disabled = true;
       setStatus('Desktop window controls are available in the Electron app.');
       return;
     }
@@ -204,6 +207,10 @@ window.pageControllers.chat = function () {
       displays = Array.isArray(nextDisplays) ? nextDisplays : [];
       pipEnabled = state?.pipEnabled === true;
       bounds = state?.bounds || makeDefaultBounds(displays.find((display) => display.primary) || displays[0]);
+      excludedUsernamesInput.value = Array.isArray(state?.excludedUsernames)
+        ? state.excludedUsernames.join(', ')
+        : '';
+      excludedUsernamesInput.disabled = false;
       pipToggle.checked = pipEnabled;
       pipLabel.textContent = pipEnabled ? 'On' : 'Off';
       hideButton.disabled = !pipEnabled;
@@ -231,6 +238,29 @@ window.pageControllers.chat = function () {
       setStatus(`PiP could not be changed: ${error.message || error}`);
     } finally {
       pipToggle.disabled = false;
+    }
+  });
+
+  excludedUsernamesInput.addEventListener('change', async () => {
+    if (typeof api?.setChatExcludedUsernames !== 'function') return;
+    const usernames = [...new Set(
+      excludedUsernamesInput.value
+        .split(',')
+        .map((username) => username.trim().toLowerCase())
+        .filter(Boolean)
+    )];
+    excludedUsernamesInput.value = usernames.join(', ');
+    excludedUsernamesInput.disabled = true;
+    exclusionsStatus.textContent = 'Saving…';
+    try {
+      const savedUsernames = await api.setChatExcludedUsernames(usernames);
+      excludedUsernamesInput.value = savedUsernames.join(', ');
+      exclusionsStatus.textContent = 'Saved.';
+    } catch (error) {
+      console.error('[Chat] Could not save excluded usernames:', error);
+      exclusionsStatus.textContent = 'Could not save excluded usernames.';
+    } finally {
+      excludedUsernamesInput.disabled = false;
     }
   });
 

@@ -34,6 +34,17 @@
     </article>
   </div>
 
+  <section class="chat-exclusions-card" aria-labelledby="chat-exclusions-title">
+    <div>
+      <p class="panel-label">Desktop PiP</p>
+      <h4 id="chat-exclusions-title">Excluded usernames</h4>
+      <p class="chat-exclusions-hint">Comma-separated usernames to hide from PiP chat. Changes save when you leave the field; matching is case-insensitive.</p>
+    </div>
+    <input id="chat-excluded-usernames" type="text" autocomplete="off" spellcheck="false"
+      aria-describedby="chat-exclusions-status" placeholder="username1, username2">
+    <span id="chat-exclusions-status" class="chat-exclusions-status" role="status"></span>
+  </section>
+
   <section class="chat-layout-card" aria-labelledby="chat-layout-title">
     <div class="chat-layout-card__header">
       <div>

@@ -61,9 +61,25 @@
   <script>
     (() => {
       const MAX_VISIBLE_MESSAGES = 10;
+      let excludedUsernames = new Set();
       const container = document.getElementById('chat-container');
       const relayUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + (location.host || '127.0.0.1:8766');
       const client = new OverlayWebSocketClient(relayUrl, 'chat-pip-status', 'CHAT PIP');
+
+      window.chatPipAPI?.onExcludedUsernamesChanged((usernames) => {
+        excludedUsernames = new Set(
+          (Array.isArray(usernames) ? usernames : [])
+            .filter((username) => typeof username === 'string')
+            .map((username) => username.trim().toLowerCase())
+            .filter(Boolean)
+        );
+        container.querySelectorAll('.chat-line').forEach((line) => {
+          const username = line.querySelector('.chat-line__username')?.textContent;
+          if (typeof username === 'string' && excludedUsernames.has(username.trim().toLowerCase())) {
+            line.remove();
+          }
+        });
+      });
 
       function isSafeColor(value) {
         return typeof value === 'string' && /^(#[\da-f]{3,8}|[a-z]{1,20})$/i.test(value.trim());
@@ -71,6 +87,7 @@
 
       function addMessage(data) {
         if (!data || typeof data !== 'object') return;
+        if (typeof data.user === 'string' && excludedUsernames.has(data.user.trim().toLowerCase())) return;
 
         const line = document.createElement('div');
         line.className = 'chat-line';
