@@ -34,6 +34,12 @@
   margin: 0;
 }
 
+.database-overview-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .database-description {
   margin: 7px 0 0;
   color: var(--muted);
@@ -180,6 +186,7 @@
 
 @media (max-width: 720px) {
   .database-overview, .database-content__header { flex-direction: column; }
+  .database-overview-actions { width: 100%; justify-content: space-between; }
   .database-workspace { grid-template-columns: 1fr; grid-template-rows: minmax(100px, .35fr) minmax(0, 1fr); }
   .database-sidebar { min-height: 0; }
   .database-table-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }

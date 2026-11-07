@@ -156,6 +156,14 @@ const OAUTH_PREFIX_KEYS = new Set([
         label: 'Stream Refresh Token',
         hint: 'Refresh token used for stream actions',
       },
+      extension_client_id: {
+        label: 'Extension Client ID',
+        hint: 'Twitch extension client ID (used for extension auth)',
+      },
+      extension_secret: {
+        label: 'Extension Client Secret',
+        hint: 'Twitch extension client secret (used for extension auth)',
+      },
     },
 
     discord: {

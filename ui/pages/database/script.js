@@ -9,6 +9,7 @@ window.pageControllers.database = function () {
   const rowCount = document.getElementById('database-row-count');
   const selectedDatabase = document.getElementById('database-selected-database');
   const selectedTable = document.getElementById('database-selected-table');
+  const exportButton = document.getElementById('database-export');
   const tableToolbar = document.getElementById('database-table-toolbar');
   const rowToolbar = document.getElementById('database-row-toolbar');
   const addRowButton = document.getElementById('database-add-row');
@@ -44,6 +45,7 @@ window.pageControllers.database = function () {
   let lastResult = null;
   let loading = false;
   let writing = false;
+  let exporting = false;
 
   // Live-refresh state. Signatures let the 5s background poll short-circuit:
   // if the snapshot bytes are identical to the previous poll, refresh() skips
@@ -279,13 +281,14 @@ window.pageControllers.database = function () {
     const ctx = selectedContext();
     // A gated table renders no rows, so nothing can be edited until it is
     // revealed. Add row / Delete / Drop all hang off `editable`.
-    const editable = Boolean(ctx && canWrite() && ctx.pk.length) && !writing && !isGated(ctx?.table);
-    if (saveButton) saveButton.disabled = writing || dirtyRows.size === 0;
-    if (discardButton) discardButton.disabled = writing || dirtyRows.size === 0;
+    const editable = Boolean(ctx && canWrite() && ctx.pk.length) && !writing && !exporting && !isGated(ctx?.table);
+    if (saveButton) saveButton.disabled = writing || exporting || dirtyRows.size === 0;
+    if (discardButton) discardButton.disabled = writing || exporting || dirtyRows.size === 0;
     if (addRowButton) addRowButton.disabled = !editable;
     if (deleteRowsButton) deleteRowsButton.disabled = !editable || checkedRows.size === 0;
     if (dropTableButton) dropTableButton.disabled = !editable;
-    if (newTableButton) newTableButton.disabled = !canWrite() || writing;
+    if (newTableButton) newTableButton.disabled = !canWrite() || writing || exporting;
+    if (exportButton) exportButton.disabled = !canWrite() || exporting;
   }
 
   function render() {
@@ -438,6 +441,90 @@ window.pageControllers.database = function () {
   function closeModal() {
     if (modal) modal.classList.add('hidden');
     modalConfirmHandler = null;
+  }
+
+  const providerExportHint = 'Open the database directly through your database provider to view or export this data.';
+
+  function showExcelLimitMessage(message) {
+    openModal({
+      title: 'Excel export unavailable',
+      bodyHtml: `<p class="database-form-warning">${escapeHtml(message)}</p><p>${escapeHtml(providerExportHint)}</p>`,
+      confirmLabel: 'Close',
+      onConfirm: () => true,
+    });
+  }
+
+  async function exportDatabase() {
+    if (exporting) return;
+    if (!canWrite() || !pg || typeof pg.getExportEstimate !== 'function') {
+      showFeedback('Excel export is only available in the connected Electron app.', true);
+      return;
+    }
+
+    exporting = true;
+    updateToolbarState();
+    showFeedback('Checking database size...');
+    let estimate;
+    try {
+      estimate = await pg.getExportEstimate();
+    } catch (error) {
+      showFeedback(`Could not check database size: ${String((error && error.message) || error)}`, true);
+      exporting = false;
+      updateToolbarState();
+      return;
+    }
+    exporting = false;
+    updateToolbarState();
+
+    if (!estimate.ok) {
+      if (estimate.hardLimit) showExcelLimitMessage(estimate.error);
+      else showFeedback(`Could not prepare Excel export: ${estimate.error}`, true);
+      return;
+    }
+
+    const totalRows = BigInt(estimate.totalRows || '0');
+    const rowSummary = totalRows.toLocaleString();
+    const largeWarning = estimate.large
+      ? `<p class="database-form-warning">This is a large export (${rowSummary} rows) and may take some time or create a large file. Choose <strong>Export anyway</strong> to continue.</p>`
+      : '';
+    const bodyHtml = `
+      <p>Export all <strong>${Number(estimate.tables).toLocaleString()}</strong> tables and <strong>${rowSummary}</strong> rows into one Excel workbook?</p>
+      <p>Tables that exceed Excel's per-sheet row limit will continue on additional sheets.</p>
+      ${largeWarning}
+      <p>If a value or table exceeds an Excel hard limit, the export will stop and suggest using your database provider's dashboard.</p>`;
+    openModal({
+      title: 'Export database to Excel',
+      bodyHtml,
+      confirmLabel: estimate.large ? 'Export anyway' : 'Export',
+      onConfirm: async () => {
+        exporting = true;
+        updateToolbarState();
+        try {
+          const result = await pg.exportXlsx();
+          if (result.canceled) return true;
+          if (!result.ok) {
+            if (result.hardLimit) {
+              modalError(`${result.error} ${providerExportHint}`);
+              modalConfirm.textContent = 'Close';
+              modalConfirmHandler = () => true;
+              return false;
+            }
+            modalError(result.error || 'Excel export failed.');
+            return false;
+          }
+          showFeedback(
+            `Exported ${BigInt(result.totalRows || '0').toLocaleString()} rows from ${Number(result.tables).toLocaleString()} tables.`
+          );
+          return true;
+        } catch (error) {
+          modalError(`Excel export failed: ${String((error && error.message) || error)}`);
+          return false;
+        } finally {
+          exporting = false;
+          updateToolbarState();
+        }
+      },
+    });
   }
 
   // ---- Write operations -----------------------------------------------------
@@ -675,6 +762,7 @@ window.pageControllers.database = function () {
   });
   newTableButton?.addEventListener('click', openCreateTableModal);
   dropTableButton?.addEventListener('click', openDropTableModal);
+  exportButton?.addEventListener('click', exportDatabase);
 
   modalCancel?.addEventListener('click', closeModal);
   modal?.addEventListener('click', (event) => {
@@ -728,7 +816,7 @@ window.pageControllers.database = function () {
   // a write is in flight, or Postgres isn't connected (browser fallback mode
   // keeps its WebSocket subscription instead).
   function shouldPoll() {
-    if (loading || writing || editingCell) return false;
+    if (loading || writing || exporting || editingCell) return false;
     if (modal && !modal.classList.contains('hidden')) return false;
     if (document.hidden) return false;
     if (!pg || !pg.isDirect || !pg.isDirect()) return false;

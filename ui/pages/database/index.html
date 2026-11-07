@@ -5,7 +5,10 @@
       <h3>Stored data</h3>
       <p class="database-description">Browse and edit the live database — writes go straight to Postgres from the Electron app.</p>
     </div>
-    <div class="database-status" id="database-status">Waiting for snapshot</div>
+    <div class="database-overview-actions">
+      <button class="database-tool-button database-tool-button--primary" id="database-export" type="button" disabled>Export Excel</button>
+      <div class="database-status" id="database-status">Waiting for snapshot</div>
+    </div>
   </div>
 
   <div class="database-metrics" aria-label="Database summary">

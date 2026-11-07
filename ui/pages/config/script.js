@@ -284,6 +284,10 @@ const HIDDEN_SECTIONS = new Set([
         label: 'YouTube Role ID',
         hint: 'YouTube Subscription Reward (Drinst Bucks)',
       },
+      verified: {
+        label: 'Verified Role ID',
+        hint: 'Role ID for verified users (used for verification)',
+      },
     }
   };
 

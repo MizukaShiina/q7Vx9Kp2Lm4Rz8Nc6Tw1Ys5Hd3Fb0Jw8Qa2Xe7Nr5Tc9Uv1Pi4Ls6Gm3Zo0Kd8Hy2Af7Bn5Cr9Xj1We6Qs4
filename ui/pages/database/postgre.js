@@ -127,6 +127,14 @@
     return requireDirect(() => window.dbAPI.dropTable(name, options));
   }
 
+  function getExportEstimate() {
+    return requireDirect(() => window.dbAPI.getExportEstimate());
+  }
+
+  function exportXlsx() {
+    return requireDirect(() => window.dbAPI.exportXlsx());
+  }
+
   function getStatus() {
     return currentStatus;
   }
@@ -169,6 +177,8 @@
     deleteRows,
     createTable,
     dropTable,
+    getExportEstimate,
+    exportXlsx,
     getStatus,
     onStatusChange,
     isDirect: () => usingDirect,
