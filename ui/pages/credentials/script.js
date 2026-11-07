@@ -445,7 +445,28 @@ function createFieldRow(sectionId, field) {
   input.dataset.key = field.id;
   input.dataset.type = field.type;
   input.dataset.original = Array.isArray(field.value) ? field.value.join(', ') : String(field.value);
-  control.appendChild(input);
+  if (input.type === 'password') {
+    const secretControl = document.createElement('div');
+    secretControl.className = 'creds-secret-control';
+    const revealButton = document.createElement('button');
+    revealButton.type = 'button';
+    revealButton.className = 'creds-secret-toggle';
+    revealButton.textContent = 'Show';
+    revealButton.setAttribute('aria-label', `Show ${field.label}`);
+    revealButton.setAttribute('aria-controls', input.id);
+    revealButton.setAttribute('aria-pressed', 'false');
+    revealButton.addEventListener('click', () => {
+      const isRevealed = input.type === 'password';
+      input.type = isRevealed ? 'text' : 'password';
+      revealButton.textContent = isRevealed ? 'Hide' : 'Show';
+      revealButton.setAttribute('aria-label', `${isRevealed ? 'Hide' : 'Show'} ${field.label}`);
+      revealButton.setAttribute('aria-pressed', String(isRevealed));
+    });
+    secretControl.append(input, revealButton);
+    control.appendChild(secretControl);
+  } else {
+    control.appendChild(input);
+  }
   row.appendChild(control);
   return row;
 }
@@ -786,4 +807,3 @@ async function initCredsPage() {
 
 initCredsPage();
 })();
-
