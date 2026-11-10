@@ -467,8 +467,106 @@ function createFieldRow(sectionId, field) {
   } else {
     control.appendChild(input);
   }
+  if (sectionId === 'twitch' && (field.id === 'oauth_token' || field.id === 'stream_oauth')) {
+    const validateButton = document.createElement('button');
+    validateButton.type = 'button';
+    validateButton.className = 'ghost-button creds-oauth-validate';
+    validateButton.textContent = 'Validate token';
+    validateButton.disabled = !input.value.trim() || input.value.trim().toLowerCase() === 'oauth:';
+
+    const validationStatus = document.createElement('div');
+    validationStatus.className = 'creds-oauth-validation';
+    validationStatus.setAttribute('role', 'status');
+    validationStatus.setAttribute('aria-live', 'polite');
+
+    input.addEventListener('input', () => {
+      validationStatus.textContent = '';
+      validationStatus.className = 'creds-oauth-validation';
+      validateButton.disabled = validateButton.dataset.validating === '1' ||
+        !input.value.trim() || input.value.trim().toLowerCase() === 'oauth:';
+    });
+    validateButton.addEventListener('click', () => {
+      validateTwitchOAuthToken(input, validateButton, validationStatus);
+    });
+    const oauthActions = document.createElement('div');
+    oauthActions.className = 'creds-oauth-actions';
+    oauthActions.append(control.firstElementChild, validateButton);
+    control.append(oauthActions, validationStatus);
+  }
   row.appendChild(control);
   return row;
+}
+
+async function validateTwitchOAuthToken(input, button, status) {
+  const token = input.value.trim().replace(/^oauth:/i, '').trim();
+  if (!token) {
+    status.className = 'creds-oauth-validation is-error';
+    status.textContent = 'Enter an OAuth token to validate.';
+    return;
+  }
+
+  const connection = window.connection;
+  const bridge = connection?.getBridge?.();
+  if (!bridge || !connection?.isConnected?.()) {
+    status.className = 'creds-oauth-validation is-error';
+    status.textContent = 'Not connected to the bot server.';
+    return;
+  }
+
+  button.disabled = true;
+  button.dataset.validating = '1';
+  button.textContent = 'Validating...';
+  status.className = 'creds-oauth-validation is-busy';
+  status.textContent = 'Checking token with Twitch...';
+  try {
+    const response = await bridge.sendWithResponse(
+      'validate_twitch_oauth_token',
+      { token }
+    );
+    if (input.value.trim().replace(/^oauth:/i, '').trim() !== token) {
+      status.className = 'creds-oauth-validation is-warning';
+      status.textContent = 'Token changed during validation. Validate again to check the current value.';
+      return;
+    }
+    if (!response?.ok) {
+      throw new Error(response?.error || 'Token validation failed.');
+    }
+
+    let result = response.result;
+    if (result && typeof result === 'object' && result.result && typeof result.result === 'object') {
+      result = result.result;
+    }
+    if (result === null || result === undefined || result === false) {
+      throw new Error('Twitch rejected this token or did not return token details.');
+    }
+    const validation = result && typeof result === 'object' ? result : {};
+    if (validation.valid === false || validation.is_valid === false || validation.ok === false) {
+      throw new Error(validation.error || validation.message || 'Twitch rejected this token.');
+    }
+
+    const info = validation.data && typeof validation.data === 'object'
+      ? validation.data
+      : validation;
+    if (!Array.isArray(info.scopes)) {
+      throw new Error('Validation response did not include granted scopes.');
+    }
+    const scopes = info.scopes;
+    const lines = ['Token is valid'];
+    const login = info.login || info.username || info.user_name;
+    if (login) lines.push('Account: ' + login);
+    lines.push(scopes.length ? 'Granted scopes (' + scopes.length + '): ' + scopes.join(', ') : 'Granted scopes: none');
+
+    status.className = 'creds-oauth-validation is-ok';
+    status.textContent = lines.join('\n');
+  } catch (error) {
+    console.error('[Credentials] Twitch OAuth validation failed:', error);
+    status.className = 'creds-oauth-validation is-error';
+    status.textContent = error instanceof Error ? error.message : String(error);
+  } finally {
+    delete button.dataset.validating;
+    button.textContent = 'Validate token';
+    button.disabled = !input.value.trim() || input.value.trim().toLowerCase() === 'oauth:';
+  }
 }
 
 

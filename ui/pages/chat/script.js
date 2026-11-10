@@ -4,6 +4,7 @@ window.pageControllers.chat = function () {
   const stage = document.getElementById('chat-monitor-stage');
   const empty = document.getElementById('chat-layout-empty');
   const pipToggle = document.getElementById('chat-pip-toggle');
+  const pipDirectionToggle = document.getElementById('chat-pip-direction-toggle');
   const pipLabel = document.getElementById('chat-pip-label');
   const pipSize = document.getElementById('chat-pip-size');
   const layoutStatus = document.getElementById('chat-layout-status');
@@ -105,6 +106,20 @@ window.pageControllers.chat = function () {
       stage.appendChild(monitor);
     });
 
+    pipDirectionToggle.addEventListener('change', async () => {
+      pipDirectionToggle.disabled = true;
+      try {
+        const state = await api.setChatPipNewestAtTop(pipDirectionToggle.checked);
+        pipDirectionToggle.checked = state?.pipNewestAtTop === true;
+      } catch (error) {
+        pipDirectionToggle.checked = !pipDirectionToggle.checked;
+        console.error('[Chat] Could not change PiP chat direction:', error);
+        setStatus(`Chat direction could not be changed: ${error.message || error}`);
+      } finally {
+        pipDirectionToggle.disabled = false;
+      }
+    });
+
     if (bounds) {
       const rectangle = document.createElement('div');
       rectangle.className = 'chat-pip-rectangle';
@@ -195,6 +210,7 @@ window.pageControllers.chat = function () {
   async function refresh() {
     if (!api?.getChatWindowState || !api?.getDisplays) {
       pipToggle.disabled = true;
+      pipDirectionToggle.disabled = true;
       openButton.disabled = true;
       hideButton.disabled = true;
       excludedUsernamesInput.disabled = true;
@@ -207,6 +223,7 @@ window.pageControllers.chat = function () {
       displays = Array.isArray(nextDisplays) ? nextDisplays : [];
       pipEnabled = state?.pipEnabled === true;
       bounds = state?.bounds || makeDefaultBounds(displays.find((display) => display.primary) || displays[0]);
+      pipDirectionToggle.checked = state?.pipNewestAtTop === true;
       excludedUsernamesInput.value = Array.isArray(state?.excludedUsernames)
         ? state.excludedUsernames.join(', ')
         : '';

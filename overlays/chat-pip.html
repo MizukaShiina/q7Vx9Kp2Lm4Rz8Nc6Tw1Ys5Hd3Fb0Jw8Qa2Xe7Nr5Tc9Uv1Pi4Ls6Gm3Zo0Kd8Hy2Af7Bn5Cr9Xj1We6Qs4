@@ -25,6 +25,7 @@
       padding: 14px;
       overflow: hidden;
     }
+    #chat-container[data-newest-at-top="true"] { flex-direction: column-reverse; }
     .chat-line {
       max-width: 100%;
       color: #f3f1f7;
@@ -65,6 +66,10 @@
       const container = document.getElementById('chat-container');
       const relayUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + (location.host || '127.0.0.1:8766');
       const client = new OverlayWebSocketClient(relayUrl, 'chat-pip-status', 'CHAT PIP');
+
+      window.chatPipAPI?.onNewestAtTopChanged((enabled) => {
+        container.dataset.newestAtTop = String(enabled === true);
+      });
 
       window.chatPipAPI?.onExcludedUsernamesChanged((usernames) => {
         excludedUsernames = new Set(

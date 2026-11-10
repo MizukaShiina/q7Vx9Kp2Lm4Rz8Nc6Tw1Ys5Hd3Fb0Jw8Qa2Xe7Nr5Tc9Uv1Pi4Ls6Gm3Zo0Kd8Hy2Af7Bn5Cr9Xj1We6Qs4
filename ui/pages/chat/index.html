@@ -26,11 +26,18 @@
         <h4>Always-on-top overlay</h4>
         <p>A transparent, taskbar-free window using the existing overlay. It ignores mouse input; manage it here.</p>
       </div>
-      <label class="chat-toggle">
-        <input id="chat-pip-toggle" type="checkbox" aria-label="Enable desktop PiP chat">
-        <span class="chat-toggle__track" aria-hidden="true"></span>
-        <span id="chat-pip-label">Off</span>
-      </label>
+      <div class="chat-mode-card__controls">
+        <label class="chat-toggle">
+          <input id="chat-pip-toggle" type="checkbox" aria-label="Enable desktop PiP chat">
+          <span class="chat-toggle__track" aria-hidden="true"></span>
+          <span id="chat-pip-label">Off</span>
+        </label>
+        <label class="chat-toggle">
+          <input id="chat-pip-direction-toggle" type="checkbox" aria-label="Show newest chat messages at the top">
+          <span class="chat-toggle__track" aria-hidden="true"></span>
+          <span>Newest at top</span>
+        </label>
+      </div>
     </article>
   </div>
 
