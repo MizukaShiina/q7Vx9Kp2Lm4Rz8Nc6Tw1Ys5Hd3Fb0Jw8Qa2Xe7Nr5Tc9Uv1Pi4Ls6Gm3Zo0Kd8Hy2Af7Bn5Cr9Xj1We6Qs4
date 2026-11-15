@@ -177,6 +177,23 @@
 .database-table { width: 100%; border-collapse: collapse; font-size: .78rem; }
 .database-table th, .database-table td { padding: 10px 9px; border-bottom: 1px solid rgba(255,255,255,.07); text-align: left; white-space: nowrap; }
 .database-table th { position: sticky; top: 0; color: var(--muted); background: var(--panel-strong); font-size: .66rem; letter-spacing: .1em; text-transform: uppercase; }
+.database-sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+}
+.database-sort-button:hover,
+.database-sort-button:focus-visible { color: var(--text); }
+.database-sort-button span { opacity: .7; }
+.database-sort-note { padding: 0 2px 8px; color: var(--muted); font-size: .7rem; }
 .database-table td { color: #dce3f8; }
 .database-table tbody tr:hover { background: rgba(255,255,255,.035); }
 .database-table__empty { padding: 28px 10px !important; color: var(--muted) !important; text-align: center !important; }

@@ -53,6 +53,8 @@ window.pageControllers.database = function () {
   const POLL_INTERVAL_MS = 5000;
   let lastSnapshotSignature = null;
   let lastTableSignature = null;
+  const sortStates = new Map();
+  const sortCollator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
 
   // Edit state — rowsByKey maps rowKey -> original snapshot row, dirtyRows
   // holds pending cell edits, checkedRows holds rows ticked for deletion.
@@ -103,6 +105,38 @@ window.pageControllers.database = function () {
 
   function getPrimaryKey(payload) {
     return Array.isArray(payload?.primary_key) ? payload.primary_key : [];
+  }
+
+  function compareSortValues(left, right) {
+    if (left == null) return right == null ? 0 : 1;
+    if (right == null) return -1;
+    if (typeof left === 'boolean' && typeof right === 'boolean') {
+      return Number(left) - Number(right);
+    }
+
+    const leftText = String(left).trim();
+    const rightText = String(right).trim();
+    const integerPattern = /^[+-]?\d+$/;
+    if (integerPattern.test(leftText) && integerPattern.test(rightText)) {
+      const leftInteger = BigInt(leftText);
+      const rightInteger = BigInt(rightText);
+      return leftInteger < rightInteger ? -1 : leftInteger > rightInteger ? 1 : 0;
+    }
+
+    const numericPattern = /^[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?$/i;
+    if (numericPattern.test(leftText) && numericPattern.test(rightText)) {
+      const leftNumber = Number(leftText);
+      const rightNumber = Number(rightText);
+      if (Number.isFinite(leftNumber) && Number.isFinite(rightNumber)) {
+        return leftNumber - rightNumber;
+      }
+    }
+
+    return sortCollator.compare(String(left), String(right));
+  }
+
+  function tableSortKey(databaseName, tableName) {
+    return JSON.stringify([databaseName, tableName]);
   }
 
   // Writes are only possible in Electron direct mode while connected.
@@ -181,10 +215,28 @@ window.pageControllers.database = function () {
       return String(value ?? '').toLowerCase().includes(query);
     }));
 
-    // newestFirst flips the fetched window so inserts land at the top. Display
-    // order only — rowsByKey and every write path are keyed, not positional.
+    // newestFirst flips the fetched window so inserts land at the top. Column
+    // sorting, when active, only reorders this already-loaded snapshot.
     const meta = metaFor(tableName);
-    const displayRows = meta.newestFirst ? [...filteredRows].reverse() : filteredRows;
+    const naturalRows = meta.newestFirst ? [...filteredRows].reverse() : filteredRows;
+    const sortKey = tableSortKey(database.database, tableName);
+    const sortState = sortStates.get(sortKey);
+    const displayRows = sortState
+      ? naturalRows.map((row, index) => ({ row, index })).sort((left, right) => {
+        const leftKey = rowKey(left.row, pk);
+        const rightKey = rowKey(right.row, pk);
+        const leftDirty = leftKey ? dirtyRows.get(leftKey) : null;
+        const rightDirty = rightKey ? dirtyRows.get(rightKey) : null;
+        const leftValue = leftDirty && Object.prototype.hasOwnProperty.call(leftDirty.values, sortState.column)
+          ? leftDirty.values[sortState.column]
+          : left.row?.[sortState.column];
+        const rightValue = rightDirty && Object.prototype.hasOwnProperty.call(rightDirty.values, sortState.column)
+          ? rightDirty.values[sortState.column]
+          : right.row?.[sortState.column];
+        const comparison = compareSortValues(leftValue, rightValue);
+        return (sortState.direction === 'asc' ? comparison : -comparison) || left.index - right.index;
+      }).map(({ row }) => row)
+      : naturalRows;
 
     selectedDatabase.textContent = database.database || 'Database';
     const pkNote = pk.length ? '' : ' — no primary key (read-only)';
@@ -208,8 +260,17 @@ window.pageControllers.database = function () {
     }
 
     const headerCells = [
-      editable ? '<th class="database-table__check" title="Select rows to delete"><input type="checkbox" id="database-check-all" aria-label="Select all rows" /></th>' : '',
-      ...columns.map((column) => `<th>${escapeHtml(column)}</th>`),
+      editable ? '<th class="database-table__check" scope="col" title="Select rows to delete"><input type="checkbox" id="database-check-all" aria-label="Select all rows" /></th>' : '',
+      ...columns.map((column) => {
+        const active = sortState?.column === column;
+        const direction = active ? sortState.direction : null;
+        const arrow = direction === 'asc' ? '↑' : direction === 'desc' ? '↓' : '↕';
+        const label = active
+          ? `Sort ${column} ${direction === 'asc' ? 'ascending' : 'descending'}`
+          : `Sort by ${column}`;
+        const ariaSort = direction ? ` aria-sort="${direction === 'asc' ? 'ascending' : 'descending'}"` : '';
+        return `<th scope="col"${ariaSort}><button class="database-sort-button" type="button" data-sort-column="${escapeHtml(column)}" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}">${escapeHtml(column)}<span aria-hidden="true">${arrow}</span></button></th>`;
+      }),
     ].join('');
 
     const bodyRows = displayRows.length ? displayRows.map((row) => {
@@ -238,7 +299,7 @@ window.pageControllers.database = function () {
     // restored by the render itself via displayValue()/checkedRows).
     const keepTop = tableWrap.scrollTop;
     const keepLeft = tableWrap.scrollLeft;
-    tableWrap.innerHTML = `${hint}<table class="database-table"><thead><tr>${headerCells}</tr></thead><tbody>${bodyRows}</tbody></table>`;
+    tableWrap.innerHTML = `${hint}<div class="database-sort-note">Sorting applies only to rows loaded in this snapshot; large tables may have more rows.</div><table class="database-table"><thead><tr>${headerCells}</tr></thead><tbody>${bodyRows}</tbody></table>`;
     tableWrap.scrollTop = keepTop;
     tableWrap.scrollLeft = keepLeft;
   }
@@ -727,6 +788,20 @@ window.pageControllers.database = function () {
   }
 
   // ---- Event wiring ----------------------------------------------------------
+
+  tableWrap.addEventListener('click', (event) => {
+    const sortButton = event.target.closest('button.database-sort-button');
+    if (!sortButton) return;
+    const ctx = selectedContext();
+    if (!ctx) return;
+    const key = tableSortKey(ctx.database.database, ctx.table);
+    const previous = sortStates.get(key);
+    const direction = previous?.column === sortButton.dataset.sortColumn && previous.direction === 'asc'
+      ? 'desc'
+      : 'asc';
+    sortStates.set(key, { column: sortButton.dataset.sortColumn, direction });
+    renderTable(ctx.database, ctx.table);
+  });
 
   tableWrap.addEventListener('dblclick', (event) => {
     const cell = event.target.closest('td.database-cell.is-editable');
