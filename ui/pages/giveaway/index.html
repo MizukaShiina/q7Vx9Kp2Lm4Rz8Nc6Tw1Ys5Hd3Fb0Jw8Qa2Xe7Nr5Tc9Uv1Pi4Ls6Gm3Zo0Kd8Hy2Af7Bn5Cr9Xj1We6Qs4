@@ -81,9 +81,9 @@
   <div class="giveaway-title-row">
     <label for="giveaway-title">Title</label>
     <input id="giveaway-title" type="text" placeholder="Enter Giveaway Title..." />
-    <label for="giveaway-reward">Reward</label>
+    <label for="giveaway-reward-trigger">Reward</label>
     <span class="giveaway-select-wrap">
-      <select id="giveaway-reward">
+      <select id="giveaway-reward" class="giveaway-reward-native" tabindex="-1" aria-hidden="true">
         <option value="Tier 1">Tier 1</option>
         <option value="Tier 2">Tier 2</option>
         <option value="Monthly Pass">Monthly Pass</option>
@@ -91,6 +91,11 @@
         <option value="Steam5">$5 Steam</option>
         <option value="Steam10">$10 Steam</option>
       </select>
+      <button class="giveaway-reward-trigger hidden" type="button" id="giveaway-reward-trigger"
+        aria-label="Reward" aria-haspopup="listbox" aria-expanded="false" aria-controls="giveaway-reward-menu">
+        <span id="giveaway-reward-label"></span>
+      </button>
+      <div class="giveaway-reward-menu hidden" id="giveaway-reward-menu" role="listbox" aria-label="Reward options"></div>
     </span>
   </div>
 
@@ -112,6 +117,10 @@
 
           <button class="ghost-button button-danger giveaway-reset-small" type="button" id="giveaway-reset">
             Reset
+          </button>
+
+          <button class="ghost-button giveaway-curve-toggle" type="button" id="giveaway-curve-toggle">
+            Pity curve
           </button>
 
           <button class="ghost-button giveaway-settings-toggle" type="button" id="giveaway-settings-toggle" title="Giveaway settings" aria-label="Open giveaway settings">
@@ -292,6 +301,64 @@
             </button>
         </div>
     </div>
+</div>
+
+<div id="giveaway-pity-curve-modal" class="giveaway-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="giveaway-pity-curve-title" aria-describedby="giveaway-pity-curve-description">
+  <div class="giveaway-modal giveaway-modal--curve">
+    <div class="giveaway-modal__header">
+      <p class="panel-label">Giveaway weights</p>
+      <h3 id="giveaway-pity-curve-title">Pity curve</h3>
+    </div>
+
+    <div class="giveaway-modal__body">
+      <div class="pity-curve-settings" aria-label="Pity settings">
+        <label class="pity-curve-field">
+          <span>Hard pity</span>
+          <input id="pity-hard-pity" type="number" min="1" step="1" inputmode="numeric" />
+        </label>
+        <label class="pity-curve-field">
+          <span>Curve exponent</span>
+          <input id="pity-curve-exponent" type="number" min="0" step="any" inputmode="decimal" />
+        </label>
+        <label class="pity-curve-field">
+          <span>Curve scale</span>
+          <input id="pity-curve-scale" type="number" min="0" step="any" inputmode="decimal" />
+        </label>
+        <label class="pity-curve-field">
+          <span>Max weight</span>
+          <input id="pity-max-weight" type="number" min="0.000001" step="any" inputmode="decimal" />
+        </label>
+      </div>
+
+      <div class="pity-preview-settings">
+        <label class="pity-curve-field">
+          <span>Subscriber tier</span>
+          <select id="pity-preview-tier">
+            <option value="0">None</option>
+            <option value="1">Tier 1</option>
+            <option value="2">Tier 2</option>
+            <option value="3">Tier 3</option>
+            <option value="4">Prime</option>
+          </select>
+        </label>
+        <label class="pity-curve-field">
+          <span>Tickets</span>
+          <input id="pity-preview-tickets" type="number" min="1" step="1" value="1" inputmode="numeric" />
+        </label>
+      </div>
+
+      <svg id="giveaway-pity-curve-chart" class="giveaway-pity-curve-chart" viewBox="0 0 720 420" role="img" aria-label="Effective selection weight by pity count"></svg>
+      <p class="giveaway-pity-curve-description" id="giveaway-pity-curve-description">
+        Preview of one entrant's effective weight. The configured cap is applied after the selected tier multiplier and ticket count.
+      </p>
+      <p class="giveaway-pity-curve-status" id="giveaway-pity-curve-status" aria-live="polite"></p>
+    </div>
+
+    <div class="giveaway-modal__footer">
+      <button id="giveaway-pity-curve-close" class="ghost-button" type="button">Cancel</button>
+      <button id="giveaway-pity-curve-save" class="primary-button" type="button">Save changes</button>
+    </div>
+  </div>
 </div>
 
 <script src="script.js"></script>

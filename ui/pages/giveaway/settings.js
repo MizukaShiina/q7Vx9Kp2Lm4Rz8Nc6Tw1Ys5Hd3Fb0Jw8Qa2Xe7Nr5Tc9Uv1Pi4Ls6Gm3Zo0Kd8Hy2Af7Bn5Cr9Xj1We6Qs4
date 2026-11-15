@@ -36,6 +36,12 @@ const WINNER_VERIFICATION_FIELDS = [];
 // carry the `scheduler_` prefix — it is functionally a scheduler option.
 const SCHEDULER_KEY_OVERRIDES = new Set(['scheduler', 'winner_per_loop']);
 const WINNER_VERIFICATION_KEY_OVERRIDES = new Set(['winner_verification',]);
+const PITY_CURVE_SETTING_KEYS = new Set([
+  'hard_pity',
+  'giveaway_curve_exponent',
+  'giveaway_curve_scale',
+  'giveaway_max_weight',
+]);
 
 // Is this key part of the scheduler section?
 function isSchedulerKey(key) {
@@ -165,6 +171,7 @@ function buildFields(settings) {
     if (value && typeof value === 'object') continue;
     if (isSchedulerKey(key)) continue;
     if (isWinnerVerificationKey(key)) continue;
+    if (PITY_CURVE_SETTING_KEYS.has(key)) continue;
 
     const type = inferType(value);
     fields.push({
@@ -575,7 +582,10 @@ function openModal() {
 
   if (fieldsContainer) {
     renderFields(fieldsContainer);
-    originalGiveawayConfig = collectGiveawayConfig();
+    originalGiveawayConfig = {
+      ...(getSettingsObject() || {}),
+      ...collectGiveawayConfig(),
+    };
   }
 
   modal.classList.remove('hidden');
@@ -658,6 +668,45 @@ async function showSettingsToast(message, tone = 'info') {
   settingsToastTimer = setTimeout(() => toast.classList.remove('is-visible'), 2600);
 }
 
+async function saveGiveawayChanges(changed) {
+  if (!changed || Object.keys(changed).length === 0) return false;
+
+  const connection = window.connection;
+  const bridge = connection?.getBridge?.();
+
+  if (!bridge || !connection.isConnected()) {
+    showSettingsToast('Not connected to server.', 'warning');
+    return false;
+  }
+
+  try {
+    const response = await bridge.sendWithResponse('save_config', {
+      data: {
+        giveaway: changed,
+      },
+    });
+
+    if (response?.ok) {
+      originalGiveawayConfig = {
+        ...originalGiveawayConfig,
+        ...changed,
+      };
+      showSettingsToast('Giveaway settings saved.', 'success');
+      return true;
+    } else {
+      showSettingsToast(
+        response?.error || 'Failed to save settings.',
+        'error'
+      );
+      return false;
+    }
+  } catch (error) {
+    console.error('[Giveaway] Settings save error:', error);
+    showSettingsToast('Failed to save settings.', 'error');
+    return false;
+  }
+}
+
 async function handleSave() {
   const current = collectGiveawayConfig();
   const changed = {};
@@ -675,35 +724,7 @@ async function handleSave() {
     return;
   }
 
-  const connection = window.connection;
-  const bridge = connection?.getBridge?.();
-
-  if (!bridge || !connection.isConnected()) {
-    showSettingsToast('Not connected to server.', 'warning');
-    return;
-  }
-
-  try {
-    const response = await bridge.sendWithResponse('save_config', {
-      data: {
-        giveaway: changed,
-      },
-    });
-
-    if (response?.ok) {
-      originalGiveawayConfig = current;
-      showSettingsToast('Giveaway settings saved.', 'success');
-      closeModal();
-    } else {
-      showSettingsToast(
-        response?.error || 'Failed to save settings.',
-        'error'
-      );
-    }
-  } catch (error) {
-    console.error('[Giveaway] Settings save error:', error);
-    showSettingsToast('Failed to save settings.', 'error');
-  }
+  if (await saveGiveawayChanges(changed)) closeModal();
 }
 
 // ---------------------------------------------------------------------------
@@ -766,6 +787,7 @@ export {
   buildSchedulerFields,
   buildWinnerVerificationFields,
   collectGiveawayConfig,
+  saveGiveawayChanges,
   renderFields,
   init,
   openModal,

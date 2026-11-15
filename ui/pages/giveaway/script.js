@@ -129,6 +129,19 @@ window.pageControllers.giveaway = function () {
     const schedulerSummary = document.getElementById("giveaway-scheduler-summary");
     const schedulerCancel = document.getElementById("giveaway-scheduler-cancel");
     const schedulerConfirm = document.getElementById("giveaway-scheduler-confirm");
+    const pityCurveToggle = document.getElementById("giveaway-curve-toggle");
+    const pityCurveModal = document.getElementById("giveaway-pity-curve-modal");
+    const pityCurveClose = document.getElementById("giveaway-pity-curve-close");
+    const pityCurveSave = document.getElementById("giveaway-pity-curve-save");
+    const pityCurveChart = document.getElementById("giveaway-pity-curve-chart");
+    const pityCurveStatus = document.getElementById("giveaway-pity-curve-status");
+    const pityHardPityInput = document.getElementById("pity-hard-pity");
+    const pityCurveExponentInput = document.getElementById("pity-curve-exponent");
+    const pityCurveScaleInput = document.getElementById("pity-curve-scale");
+    const pityMaxWeightInput = document.getElementById("pity-max-weight");
+    const pityPreviewTier = document.getElementById("pity-preview-tier");
+    const pityPreviewTickets = document.getElementById("pity-preview-tickets");
+    let pityCurveSaving = false;
     const giveawayTitle = document.getElementById('giveaway-title');
     const giveawayReward = document.getElementById('giveaway-reward');
     const schedulerState = document.getElementById('scheduler-state');
@@ -145,6 +158,406 @@ window.pageControllers.giveaway = function () {
 
     // Id of the history record currently shown in the preview (if any).
     let selectedHistoryId = null;
+
+    const rewardWrap = giveawayReward.closest('.giveaway-select-wrap');
+    const rewardTrigger = document.getElementById('giveaway-reward-trigger');
+    const rewardLabel = document.getElementById('giveaway-reward-label');
+    const rewardMenu = document.getElementById('giveaway-reward-menu');
+    let activeRewardIndex = giveawayReward.selectedIndex;
+    let rewardOptions = [];
+
+    function syncRewardDropdown() {
+        const selectedOption = giveawayReward.options[giveawayReward.selectedIndex];
+        if (selectedOption && rewardLabel) {
+            rewardLabel.textContent = selectedOption.textContent.trim();
+        }
+
+        rewardOptions.forEach((option, index) => {
+            const selected = option.dataset.value === giveawayReward.value;
+            option.setAttribute('aria-selected', String(selected));
+            option.classList.toggle('is-selected', selected);
+            if (selected) activeRewardIndex = index;
+        });
+    }
+
+    function setActiveRewardOption(index, moveFocus) {
+        if (!rewardOptions.length) return;
+
+        activeRewardIndex = (index + rewardOptions.length) % rewardOptions.length;
+        rewardOptions.forEach((option, optionIndex) => {
+            option.classList.toggle('is-active', optionIndex === activeRewardIndex);
+        });
+
+        if (moveFocus) rewardOptions[activeRewardIndex].focus();
+    }
+
+    function closeRewardDropdown(returnFocus = false) {
+        rewardMenu?.classList.add('hidden');
+        rewardWrap?.classList.remove('is-open');
+        rewardTrigger?.setAttribute('aria-expanded', 'false');
+        rewardOptions.forEach((option) => option.classList.remove('is-active'));
+        if (returnFocus) rewardTrigger?.focus();
+    }
+
+    function openRewardDropdown(focusActiveOption = false) {
+        rewardMenu?.classList.remove('hidden');
+        rewardWrap?.classList.add('is-open');
+        rewardTrigger?.setAttribute('aria-expanded', 'true');
+        syncRewardDropdown();
+        setActiveRewardOption(activeRewardIndex, focusActiveOption);
+    }
+
+    function selectRewardOption(value) {
+        if (!value) return;
+        giveawayReward.value = value;
+        giveawayReward.dispatchEvent(new Event('change', { bubbles: true }));
+        syncRewardDropdown();
+        closeRewardDropdown(true);
+    }
+
+    function initializeRewardDropdown() {
+        if (!rewardWrap || !rewardTrigger || !rewardLabel || !rewardMenu) return;
+
+        rewardMenu.replaceChildren();
+        rewardOptions = Array.from(giveawayReward.options).map((nativeOption) => {
+            const option = document.createElement('div');
+            const name = document.createElement('span');
+            const category = document.createElement('span');
+            const value = nativeOption.value;
+
+            option.className = 'giveaway-reward-option';
+            option.setAttribute('role', 'option');
+            option.setAttribute('tabindex', '-1');
+            option.dataset.value = value;
+            name.className = 'giveaway-reward-option__name';
+            name.textContent = nativeOption.textContent.trim();
+            category.className = 'giveaway-reward-option__category';
+            category.textContent = value.startsWith('Steam')
+                ? 'STEAM'
+                : value.includes('Pass')
+                    ? 'PASS'
+                    : 'Tier';
+            option.append(name, category);
+            option.addEventListener('click', () => selectRewardOption(value));
+            rewardMenu.appendChild(option);
+            return option;
+        });
+
+        rewardWrap.classList.add('has-custom-dropdown');
+        rewardTrigger.classList.remove('hidden');
+        syncRewardDropdown();
+
+        rewardTrigger.onclick = () => {
+            if (rewardWrap.classList.contains('is-open')) {
+                closeRewardDropdown();
+            } else {
+                openRewardDropdown();
+            }
+        };
+        rewardTrigger.onkeydown = (event) => {
+            if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+                event.preventDefault();
+                const direction = event.key === 'ArrowDown' ? 1 : -1;
+                if (!rewardWrap.classList.contains('is-open')) {
+                    openRewardDropdown(true);
+                    if (direction < 0) setActiveRewardOption(rewardOptions.length - 1, true);
+                } else {
+                    setActiveRewardOption(activeRewardIndex + direction, true);
+                }
+            } else if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                if (rewardWrap.classList.contains('is-open')) {
+                    selectRewardOption(rewardOptions[activeRewardIndex]?.dataset.value);
+                } else {
+                    openRewardDropdown(true);
+                }
+            } else if (event.key === 'Escape' && rewardWrap.classList.contains('is-open')) {
+                event.preventDefault();
+                closeRewardDropdown();
+            }
+        };
+        rewardMenu.onkeydown = (event) => {
+            if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+                event.preventDefault();
+                setActiveRewardOption(activeRewardIndex + (event.key === 'ArrowDown' ? 1 : -1), true);
+            } else if (event.key === 'Home' || event.key === 'End') {
+                event.preventDefault();
+                setActiveRewardOption(event.key === 'Home' ? 0 : rewardOptions.length - 1, true);
+            } else if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                selectRewardOption(rewardOptions[activeRewardIndex]?.dataset.value);
+            } else if (event.key === 'Escape') {
+                event.preventDefault();
+                closeRewardDropdown(true);
+            } else if (event.key === 'Tab') {
+                closeRewardDropdown();
+            }
+        };
+        rewardWrap.onfocusout = (event) => {
+            if (!event.relatedTarget || !rewardWrap.contains(event.relatedTarget)) {
+                closeRewardDropdown();
+            }
+        };
+
+        giveawayReward.addEventListener('change', syncRewardDropdown);
+
+        const previousOutsideHandler = window.pageControllers.__giveawayRewardOutsideHandler;
+        if (previousOutsideHandler) {
+            document.removeEventListener('pointerdown', previousOutsideHandler);
+        }
+        const outsideHandler = (event) => {
+            if (!rewardWrap.contains(event.target)) closeRewardDropdown();
+        };
+        document.addEventListener('pointerdown', outsideHandler);
+        window.pageControllers.__giveawayRewardOutsideHandler = outsideHandler;
+    }
+
+    initializeRewardDropdown();
+
+    const pitySettingInputs = [
+        { key: 'hard_pity', input: pityHardPityInput, label: 'Hard pity' },
+        { key: 'giveaway_curve_exponent', input: pityCurveExponentInput, label: 'Curve exponent' },
+        { key: 'giveaway_curve_scale', input: pityCurveScaleInput, label: 'Curve scale' },
+        { key: 'giveaway_max_weight', input: pityMaxWeightInput, label: 'Max weight' },
+    ];
+
+    function readPityCurveDraft(config) {
+        if (!config) return { error: 'Pity settings are not available.' };
+
+        const values = {};
+        for (const { key, input, label } of pitySettingInputs) {
+            if (!input || input.value.trim() === '' || !input.validity.valid) {
+                return { error: `${label} has an invalid value.` };
+            }
+            values[key] = Number(input.value);
+        }
+
+        const tickets = Number(pityPreviewTickets?.value);
+        if (
+            !Object.values(values).every(Number.isFinite) ||
+            !Number.isInteger(values.hard_pity) ||
+            values.hard_pity < 1 ||
+            values.giveaway_curve_exponent < 0 ||
+            values.giveaway_curve_scale < 0 ||
+            values.giveaway_max_weight <= 0 ||
+            !Number.isInteger(tickets) ||
+            tickets < 1 ||
+            !Number.isFinite(tickets)
+        ) {
+            return { error: 'Use positive whole numbers for pity and tickets, and non-negative curve values.' };
+        }
+
+        const maxEntries = Number(config.giveaway_max_entries);
+        if (Number.isFinite(maxEntries) && maxEntries >= 1 && tickets > maxEntries) {
+            return { error: `Tickets cannot exceed the configured max entries (${Math.trunc(maxEntries)}).` };
+        }
+
+        const tier = Number(pityPreviewTier?.value);
+        const tierConfigKeys = {
+            1: 'giveaway_tier1_mult',
+            2: 'giveaway_tier2_mult',
+            3: 'giveaway_tier3_mult',
+            4: 'giveaway_prime_mult',
+        };
+        const multiplierKey = tierConfigKeys[tier];
+        const multiplier = tier === 0 ? 1 : Number(config[multiplierKey]);
+        if (!Number.isFinite(multiplier) || multiplier < 0) {
+            return { error: 'The selected subscriber multiplier is not available.' };
+        }
+
+        return {
+            values,
+            tickets,
+            multiplier,
+            tierName: pityPreviewTier?.selectedOptions[0]?.textContent || 'None',
+        };
+    }
+
+    function renderPityCurve() {
+        if (!pityCurveChart || !pityCurveStatus) return;
+
+        const config = window.state?.giveaway?.config;
+        const draft = readPityCurveDraft(config);
+        if (draft.error) {
+            pityCurveChart.innerHTML = '';
+            pityCurveStatus.textContent = draft.error;
+            pityCurveSave?.setAttribute('disabled', '');
+            return;
+        }
+
+        const { values, tickets, multiplier, tierName } = draft;
+        const hardPity = values.hard_pity;
+        const sampleCount = Math.min(hardPity, 200);
+        const points = [];
+
+        for (let i = 0; i <= sampleCount; i += 1) {
+            const pity = (i / sampleCount) * hardPity;
+            const progress = Math.min(pity / Math.max(1, hardPity), 1);
+            const baseWeight = 1 + (progress ** values.giveaway_curve_exponent) * values.giveaway_curve_scale;
+            const weight = Math.min(
+                baseWeight * multiplier * tickets,
+                values.giveaway_max_weight
+            );
+            points.push({ pity, weight });
+        }
+
+        let minWeight = Math.min(...points.map((point) => point.weight));
+        let maxWeight = Math.max(...points.map((point) => point.weight));
+        if (maxWeight - minWeight < 1e-9) {
+            const chartPadding = Math.max(0.01, Math.abs(maxWeight) * 0.05);
+            minWeight = Math.max(0, minWeight - chartPadding);
+            maxWeight += chartPadding;
+        }
+
+        const width = 720;
+        const height = 420;
+        const padding = { left: 78, right: 24, top: 24, bottom: 66 };
+        const plotWidth = width - padding.left - padding.right;
+        const plotHeight = height - padding.top - padding.bottom;
+        const x = (pity) => padding.left + (pity / hardPity) * plotWidth;
+        const y = (weight) =>
+            padding.top + ((maxWeight - weight) / (maxWeight - minWeight)) * plotHeight;
+        const xDivisions = Math.min(5, hardPity);
+        const grid = [];
+
+        for (let i = 0; i <= xDivisions; i += 1) {
+            const chartX = padding.left + (i / xDivisions) * plotWidth;
+            const pityLabel = Math.round((i / xDivisions) * hardPity);
+            grid.push(`
+                <line class="curve-grid" x1="${chartX}" y1="${padding.top}" x2="${chartX}" y2="${height - padding.bottom}" />
+                <text class="curve-label" x="${chartX}" y="${height - padding.bottom + 22}" text-anchor="middle">${pityLabel}</text>
+            `);
+        }
+
+        for (let i = 0; i <= 4; i += 1) {
+            const chartY = padding.top + (i / 4) * plotHeight;
+            const weightLabel = maxWeight - (i / 4) * (maxWeight - minWeight);
+            grid.push(`
+                <line class="curve-grid" x1="${padding.left}" y1="${chartY}" x2="${width - padding.right}" y2="${chartY}" />
+                <text class="curve-label" x="${padding.left - 10}" y="${chartY + 4}" text-anchor="end">${weightLabel.toFixed(2)}×</text>
+            `);
+        }
+
+        const path = points
+            .map((point, index) =>
+                `${index === 0 ? 'M' : 'L'}${x(point.pity).toFixed(2)},${y(point.weight).toFixed(2)}`
+            )
+            .join(' ');
+
+        pityCurveChart.innerHTML = `
+            <g>${grid.join('')}</g>
+            <line class="curve-axis" x1="${padding.left}" y1="${height - padding.bottom}" x2="${width - padding.right}" y2="${height - padding.bottom}" />
+            <line class="curve-axis" x1="${padding.left}" y1="${padding.top}" x2="${padding.left}" y2="${height - padding.bottom}" />
+            <path class="curve-line" d="${path}" />
+            <text class="curve-axis-label" x="${padding.left + plotWidth / 2}" y="${height - 12}" text-anchor="middle">Pity count</text>
+            <text class="curve-axis-label" x="18" y="${padding.top + plotHeight / 2}" text-anchor="middle" transform="rotate(-90 18 ${padding.top + plotHeight / 2})">Effective weight</text>
+        `;
+        pityCurveStatus.textContent =
+            `Weight: ${points[0].weight.toFixed(2)}× → ${points[points.length - 1].weight.toFixed(2)}×  |  ${tierName} ${multiplier.toFixed(2)}×  |  ${tickets} ticket${tickets === 1 ? '' : 's'}  |  Cap ${values.giveaway_max_weight}`;
+        if (pityCurveSave) pityCurveSave.disabled = pityCurveSaving;
+    }
+
+    function loadPityCurveDraft() {
+        const config = window.state?.giveaway?.config;
+        for (const { key, input } of pitySettingInputs) {
+            if (input) input.value = config?.[key] ?? '';
+        }
+
+        const maxEntries = Number(config?.giveaway_max_entries);
+        if (pityPreviewTickets) {
+            if (Number.isFinite(maxEntries) && maxEntries >= 1) {
+                pityPreviewTickets.max = String(Math.trunc(maxEntries));
+            } else {
+                pityPreviewTickets.removeAttribute('max');
+            }
+            pityPreviewTickets.value = '1';
+        }
+        if (pityPreviewTier) pityPreviewTier.value = '0';
+        renderPityCurve();
+    }
+
+    function closePityCurve() {
+        pityCurveModal?.classList.add('hidden');
+        pityCurveToggle?.focus();
+    }
+
+    async function savePityCurveSettings() {
+        if (pityCurveSaving) return;
+
+        const config = window.state?.giveaway?.config;
+        const draft = readPityCurveDraft(config);
+        if (draft.error) {
+            renderPityCurve();
+            return;
+        }
+
+        const changed = {};
+        for (const { key } of pitySettingInputs) {
+            if (Number(config[key]) !== draft.values[key]) {
+                changed[key] = draft.values[key];
+            }
+        }
+
+        if (Object.keys(changed).length === 0) {
+            showToast('No pity settings changed.', 'info');
+            closePityCurve();
+            return;
+        }
+
+        const saveChanges = window.giveawaySettings?.saveGiveawayChanges;
+        if (typeof saveChanges !== 'function') {
+            showToast('Giveaway settings are not ready to save.', 'error');
+            return;
+        }
+
+        pityCurveSaving = true;
+        pityCurveSave.disabled = true;
+        pitySettingInputs.forEach(({ input }) => {
+            if (input) input.disabled = true;
+        });
+        if (pityPreviewTier) pityPreviewTier.disabled = true;
+        if (pityPreviewTickets) pityPreviewTickets.disabled = true;
+        try {
+            if (await saveChanges(changed)) closePityCurve();
+        } catch (error) {
+            console.error('[Giveaway] Failed to save pity settings:', error);
+            showToast('Failed to save pity settings.', 'error');
+        } finally {
+            pityCurveSaving = false;
+            pitySettingInputs.forEach(({ input }) => {
+                if (input) input.disabled = false;
+            });
+            if (pityPreviewTier) pityPreviewTier.disabled = false;
+            if (pityPreviewTickets) pityPreviewTickets.disabled = false;
+            renderPityCurve();
+        }
+    }
+
+    pitySettingInputs.forEach(({ input }) => {
+        input?.addEventListener('input', renderPityCurve);
+    });
+    pityPreviewTier?.addEventListener('change', renderPityCurve);
+    pityPreviewTickets?.addEventListener('input', renderPityCurve);
+
+    if (pityCurveToggle && pityCurveModal) {
+        pityCurveToggle.onclick = () => {
+            loadPityCurveDraft();
+            pityCurveModal.classList.remove('hidden');
+            pityCurveClose?.focus();
+        };
+        if (pityCurveClose) {
+            pityCurveClose.onclick = closePityCurve;
+        }
+        if (pityCurveSave) {
+            pityCurveSave.onclick = savePityCurveSettings;
+        }
+        pityCurveModal.onclick = (event) => {
+            if (event.target === pityCurveModal) closePityCurve();
+        };
+        pityCurveModal.onkeydown = (event) => {
+            if (event.key === 'Escape') closePityCurve();
+        };
+    }
 
     function scheduleGiveawaySave() {
         clearTimeout(titleSaveTimeout);
@@ -325,6 +738,7 @@ window.pageControllers.giveaway = function () {
         }
 
         updateSchedulerVisibility();
+        renderPityCurve();
 
         const runtimeState = window.state.runtime || {};
         const cacheState = window.state.cache || {};
@@ -420,9 +834,10 @@ window.pageControllers.giveaway = function () {
       if (!titleDirty) {
           giveawayTitle.value = title;
       }
-      if (!rewardDirty) {
+      if (!rewardDirty && Array.from(giveawayReward.options).some((option) => option.value === prize)) {
           giveawayReward.value = prize;
       }
+      syncRewardDropdown();
 
     // Update DOM
     entriesCount.textContent = entries;

@@ -308,6 +308,22 @@
   min-width: 10rem;
 }
 
+.giveaway-select-wrap::before {
+  position: absolute;
+  top: 50%;
+  right: 0.4rem;
+  width: 1.85rem;
+  height: 1.85rem;
+  border: 1px solid rgba(127, 227, 255, 0.18);
+  border-radius: 50%;
+  background: rgba(0, 242, 255, 0.08);
+  box-shadow: 0 0 14px rgba(0, 242, 255, 0.08);
+  content: "";
+  pointer-events: none;
+  transform: translateY(-50%);
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
 .giveaway-select-wrap::after {
   position: absolute;
   top: 50%;
@@ -324,44 +340,152 @@
 
 .giveaway-select-wrap:focus-within::after {
   border-color: #7fe3ff;
+}
+
+.giveaway-select-wrap.is-open::after {
+  border-color: #7fe3ff;
   transform: translateY(-35%) rotate(225deg);
 }
 
-.giveaway-title-row select {
+.giveaway-select-wrap:focus-within::before {
+  border-color: rgba(127, 227, 255, 0.55);
+  background: rgba(0, 242, 255, 0.14);
+  box-shadow: 0 0 18px rgba(0, 242, 255, 0.2);
+}
+
+.giveaway-select-wrap.has-custom-dropdown > .giveaway-reward-native {
+  display: none;
+}
+
+.giveaway-title-row select,
+.giveaway-reward-trigger {
   appearance: none;
   width: 100%;
   min-width: 10rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--text);
+  border: 1px solid rgba(127, 227, 255, 0.2);
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(22, 39, 61, 0.96), rgba(10, 17, 30, 0.96));
+  color: #e8f3ff;
   color-scheme: dark;
   cursor: pointer;
   padding: 0.75rem 2.5rem 0.75rem 0.9rem;
-  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+  font-weight: 600;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 5px 16px rgba(0, 0, 0, 0.16);
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 
-.giveaway-title-row select:hover {
-  border-color: rgba(127, 227, 255, 0.45);
-  background: rgba(127, 227, 255, 0.08);
+.giveaway-reward-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-align: left;
+  font: inherit;
+  font-weight: 600;
 }
 
-.giveaway-title-row select:focus {
+.giveaway-title-row select:hover,
+.giveaway-reward-trigger:hover {
+  border-color: rgba(127, 227, 255, 0.55);
+  background: linear-gradient(135deg, rgba(25, 54, 77, 0.98), rgba(12, 27, 43, 0.98));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 0 18px rgba(0, 242, 255, 0.08);
+}
+
+.giveaway-title-row select:focus,
+.giveaway-reward-trigger:focus-visible {
   border-color: #7fe3ff;
   outline: none;
-  background: rgba(127, 227, 255, 0.1);
-  box-shadow: 0 0 0 3px rgba(127, 227, 255, 0.12);
+  background: linear-gradient(135deg, rgba(25, 54, 77, 0.98), rgba(12, 27, 43, 0.98));
+  box-shadow: 0 0 0 3px rgba(127, 227, 255, 0.14), 0 0 22px rgba(0, 242, 255, 0.1);
 }
 
 .giveaway-title-row select option {
   background: #101827;
   color: #e8f3ff;
-  padding: 0.65rem;
+  padding: 0.7rem;
 }
 
 .giveaway-title-row select option:checked {
-  background: #16445a;
+  background: #14556b;
   color: #ffffff;
+}
+
+.giveaway-reward-menu {
+  position: absolute;
+  top: calc(100% + 0.55rem);
+  right: 0;
+  z-index: 20;
+  display: grid;
+  gap: 0.35rem;
+  width: max(100%, 16rem);
+  max-height: 18rem;
+  overflow-y: auto;
+  padding: 0.45rem;
+  border: 1px solid rgba(127, 227, 255, 0.22);
+  border-radius: 16px;
+  background: linear-gradient(155deg, rgba(17, 30, 48, 0.98), rgba(7, 13, 24, 0.99));
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.48), 0 0 24px rgba(0, 242, 255, 0.08);
+  backdrop-filter: blur(18px);
+}
+
+.giveaway-reward-menu.hidden {
+  display: none;
+}
+
+.giveaway-reward-option {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 2.8rem;
+  padding: 0.55rem 2.25rem 0.55rem 0.7rem;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  color: #dce8f8;
+  cursor: pointer;
+  outline: none;
+  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+}
+
+.giveaway-reward-option:hover,
+.giveaway-reward-option.is-active {
+  border-color: rgba(127, 227, 255, 0.18);
+  background: rgba(127, 227, 255, 0.08);
+  color: #ffffff;
+}
+
+.giveaway-reward-option.is-selected {
+  border-color: rgba(0, 242, 255, 0.28);
+  background: linear-gradient(100deg, rgba(0, 174, 196, 0.2), rgba(31, 74, 105, 0.3));
+  color: #f1fdff;
+}
+
+.giveaway-reward-option.is-selected::after {
+  position: absolute;
+  right: 0.75rem;
+  color: #65f2eb;
+  content: "✓";
+  font-weight: 800;
+}
+
+.giveaway-reward-option__name {
+  font-weight: 600;
+}
+
+.giveaway-reward-option__category {
+  padding: 0.2rem 0.42rem;
+  border: 1px solid rgba(127, 227, 255, 0.14);
+  border-radius: 999px;
+  background: rgba(127, 227, 255, 0.06);
+  color: #92bfd0;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.giveaway-reward-menu:focus-within .giveaway-reward-option:focus {
+  border-color: rgba(0, 242, 255, 0.55);
+  box-shadow: 0 0 0 2px rgba(0, 242, 255, 0.12);
 }
 
 .giveaway-grid {
@@ -380,7 +504,16 @@
 .giveaway-controls-actions {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 0.5rem;
+}
+
+.giveaway-curve-toggle {
+  padding: 0.45rem 0.8rem;
+  font-size: 0.8rem;
+  border-radius: 10px;
+  white-space: nowrap;
 }
 
 .giveaway-settings-toggle {
@@ -652,6 +785,52 @@
     border-color: rgba(240, 2, 2, 0.4);
 }
 
+.page-host[data-active-page="giveaway"],
+#giveaway-view,
+#giveaway-history-view,
+#giveaway-view *,
+#giveaway-history-view *,
+#giveaway-pity-curve-modal,
+#giveaway-pity-curve-modal * {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 210, 230, 0.38) rgba(5, 12, 22, 0.45);
+}
+
+.page-host[data-active-page="giveaway"]::-webkit-scrollbar,
+#giveaway-view *::-webkit-scrollbar,
+#giveaway-history-view *::-webkit-scrollbar,
+#giveaway-pity-curve-modal::-webkit-scrollbar,
+#giveaway-pity-curve-modal *::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.page-host[data-active-page="giveaway"]::-webkit-scrollbar-track,
+#giveaway-view *::-webkit-scrollbar-track,
+#giveaway-history-view *::-webkit-scrollbar-track,
+#giveaway-pity-curve-modal::-webkit-scrollbar-track,
+#giveaway-pity-curve-modal *::-webkit-scrollbar-track {
+  border-radius: 999px;
+  background: rgba(5, 12, 22, 0.45);
+}
+
+.page-host[data-active-page="giveaway"]::-webkit-scrollbar-thumb,
+#giveaway-view *::-webkit-scrollbar-thumb,
+#giveaway-history-view *::-webkit-scrollbar-thumb,
+#giveaway-pity-curve-modal::-webkit-scrollbar-thumb,
+#giveaway-pity-curve-modal *::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #7fe3ff, #1686a8) padding-box;
+}
+
+.page-host[data-active-page="giveaway"]::-webkit-scrollbar-thumb:hover,
+#giveaway-view *::-webkit-scrollbar-thumb:hover,
+#giveaway-history-view *::-webkit-scrollbar-thumb:hover,
+#giveaway-pity-curve-modal::-webkit-scrollbar-thumb:hover,
+#giveaway-pity-curve-modal *::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #a5f2ff, #22b7d4) padding-box;
+}
 
 button:disabled,
 .ghost-button:disabled,
@@ -670,7 +849,10 @@ button:disabled,
     gap: 0.6rem;
     color: #dce3f8;
 
+    flex: 1;
+    min-height: 0;
     overflow-y: auto;
+    overscroll-behavior: contain;
 }
 
 .activity-log li {
@@ -944,6 +1126,138 @@ button:disabled,
   max-width: 640px;
 }
 
+.giveaway-modal--curve {
+  max-width: 760px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+}
+
+.pity-curve-settings {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.7rem;
+  margin-bottom: 0.9rem;
+}
+
+.pity-preview-settings {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 0.75rem;
+  padding: 0.8rem;
+  margin-bottom: 0.4rem;
+  border: 1px solid rgba(127, 227, 255, 0.12);
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.16);
+}
+
+.pity-curve-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-width: 0;
+  color: #aebbd2;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.pity-curve-field input,
+.pity-curve-field select {
+  width: 100%;
+  min-width: 0;
+  padding: 0.62rem 0.7rem;
+  border: 1px solid rgba(127, 227, 255, 0.17);
+  border-radius: 10px;
+  background: rgba(5, 12, 22, 0.78);
+  color: #effaff;
+  color-scheme: dark;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  outline: none;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+.pity-curve-field select {
+  appearance: none;
+  padding-right: 2rem;
+  background-image:
+    linear-gradient(45deg, transparent 50%, #7fe3ff 50%),
+    linear-gradient(135deg, #7fe3ff 50%, transparent 50%);
+  background-position:
+    calc(100% - 14px) 50%,
+    calc(100% - 9px) 50%;
+  background-size: 5px 5px;
+  background-repeat: no-repeat;
+}
+
+.pity-curve-field input:focus,
+.pity-curve-field select:focus {
+  border-color: rgba(0, 242, 255, 0.65);
+  background: rgba(9, 25, 38, 0.95);
+  box-shadow: 0 0 0 3px rgba(0, 242, 255, 0.1);
+}
+
+.pity-curve-field input:invalid {
+  border-color: rgba(255, 98, 98, 0.65);
+}
+
+.giveaway-pity-curve-chart {
+  display: block;
+  width: 100%;
+  min-height: 220px;
+  overflow: visible;
+}
+
+.giveaway-pity-curve-chart .curve-grid {
+  stroke: rgba(255, 255, 255, 0.12);
+  stroke-dasharray: 4 5;
+}
+
+.giveaway-pity-curve-chart .curve-axis {
+  stroke: rgba(88, 166, 255, 0.8);
+  stroke-width: 2;
+}
+
+.giveaway-pity-curve-chart .curve-line {
+  fill: none;
+  stroke: #00e6c3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 4;
+  filter: drop-shadow(0 0 5px rgba(0, 230, 195, 0.45));
+}
+
+.giveaway-pity-curve-chart .curve-label {
+  fill: #a3aed4;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.giveaway-pity-curve-chart .curve-axis-label {
+  fill: #00f2ff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.giveaway-pity-curve-description,
+.giveaway-pity-curve-status {
+  margin: 0.5rem 0 0;
+  color: var(--giveaway-muted);
+  text-align: center;
+}
+
+.giveaway-pity-curve-status {
+  color: #00f2ff;
+  font-weight: 600;
+}
+
+.giveaway-modal--curve .giveaway-modal__footer {
+  position: sticky;
+  bottom: -1.5rem;
+  padding: 0.75rem 0 0;
+  background: linear-gradient(180deg, transparent, rgba(8, 12, 22, 0.98) 35%);
+}
+
 @keyframes modalSlideIn {
   from {
     opacity: 0;
@@ -1186,6 +1500,14 @@ button:disabled,
   .giveaway-grid,
   .history-layout {
     grid-template-columns: 1fr;
+  }
+
+  .pity-curve-settings {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .giveaway-modal--curve {
+    max-width: 640px;
   }
 
   /* Stacked layout: un-cap the card and let the page scroll normally */
