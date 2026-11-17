@@ -274,31 +274,45 @@ export async function scanFirstHit(urls, { batchSize = SCAN_BATCH_SIZE, timeoutM
  * this file. Returns a ws:// URL string (never empty - the last resort is
  * connection.js's derived default, whose retry loop takes over).
  */
+
 export async function resolveBotUrl() {
-  // 1. Explicit ?ws= override - never scanned, never cached.
-  const paramUrl = normalizeWsUrl(new URLSearchParams(window.location?.search || '').get('ws'));
+  // 1. Explicit ?ws= override.
+  const paramUrl = normalizeWsUrl(
+    new URLSearchParams(window.location?.search || '').get('ws')
+  );
   if (paramUrl) return paramUrl;
 
-  // 2. Previously discovered URL - one probe, then trust it for this session.
+  // 2. AWS VPS default.
+  const VPS_URL = 'ws://52.64.100.132:61000';
+
+  if (await probeWs(VPS_URL)) {
+    return VPS_URL;
+  }
+
+  // 3. Previously discovered URL.
   const savedUrl = readSavedUrl();
   if (savedUrl) {
     if (await probeWs(savedUrl)) return savedUrl;
     clearSavedUrl();
   }
 
-  // 3. Same-PC fast path - preserves the historical instant connect.
+  // 4. Same-PC fallback.
   if (await probeWs(LOCALHOST_URL)) return LOCALHOST_URL;
 
-  // 4. Today's derived default (page hostname) - probe before scanning so the
-  //    "WebUI served from the bot PC" setup stays instant.
+  // 5. Derived hostname.
   const derived = normalizeWsUrl(getDefaultConnectionUrl());
   if (derived && derived !== LOCALHOST_URL && (await probeWs(derived))) {
     return derived;
   }
 
-  // 5. LAN scan.
+  // 6. LAN scan.
   try {
-    const candidates = (await getCandidateUrls()).filter((url) => url !== LOCALHOST_URL && url !== derived);
+    const candidates = (await getCandidateUrls()).filter(
+      (url) => url !== LOCALHOST_URL &&
+        url !== derived &&
+        url !== VPS_URL
+    );
+
     const found = await scanFirstHit(candidates);
     if (found) {
       saveDiscoveredUrl(found);
@@ -308,8 +322,8 @@ export async function resolveBotUrl() {
     console.warn('[Discover] LAN scan failed:', error);
   }
 
-  // 6. Nothing reachable right now - fall back to the derived URL and let the
-  //    bridge's reconnect/backoff loop keep retrying it.
-  return derived || getDefaultConnectionUrl();
+  // 7. Keep retrying the VPS if nothing is reachable.
+  return VPS_URL;
 }
+
 

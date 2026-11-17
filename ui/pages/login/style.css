@@ -214,6 +214,46 @@
   color: var(--text);
 }
 
+.remember-login {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.remember-login[hidden],
+.remember-login__forget[hidden] {
+  display: none;
+}
+
+.remember-login__check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.remember-login__check input {
+  accent-color: var(--accent);
+}
+
+.remember-login__forget {
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.remember-login__forget:hover {
+  color: var(--text);
+}
+
 .form-actions {
   display: flex;
   flex-wrap: wrap;

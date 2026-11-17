@@ -13,6 +13,9 @@
 
 // Discord IDs are larger than Number.MAX_SAFE_INTEGER. Quote unsafe integer
 // literals before parsing so JSON.parse keeps their exact decimal digits.
+const CONNECTION_HEALTH_CHECK_INTERVAL_MS = 60 * 1000;
+const CONNECTION_HEALTH_CHECK_TIMEOUT_MS = 10 * 1000;
+
 function parseJsonPreservingLargeIntegers(raw) {
     let normalized = '';
     let inString = false;
@@ -85,6 +88,8 @@ export class WebSocketBridge {
         this.sessionExpiresAt = 0;
         this._sessionRefreshTimer = null;
         this._sessionRefreshLeadTime = 5 * 60 * 1000;
+        this._connectionHealthTimer = null;
+        this._reconnectTimer = null;
 
         this.pendingResponses = new Map();
 
@@ -143,12 +148,21 @@ export class WebSocketBridge {
 
     connect() {
         this.stopping = false;
+        clearTimeout(this._reconnectTimer);
+        this._reconnectTimer = null;
+        if (
+            this.socket &&
+            (this.socket.readyState === WebSocket.CONNECTING ||
+                this.socket.readyState === WebSocket.OPEN)
+        ) {
+            return;
+        }
+
         clearTimeout(this._sessionRefreshTimer);
         this._sessionRefreshTimer = null;
+        clearTimeout(this._connectionHealthTimer);
+        this._connectionHealthTimer = null;
         this.sessionExpiresAt = 0;
-        if (this.socket) {
-            this.socket.close();
-        }
         this.authenticated = false;
         this.authPending = false;
         this.sessionId = null;
@@ -157,9 +171,11 @@ export class WebSocketBridge {
             this.url
         );
 
-        this.socket = new WebSocket(this.url);
+        const socket = new WebSocket(this.url);
+        this.socket = socket;
 
-        this.socket.onopen = () => {
+        socket.onopen = () => {
+            if (this.socket !== socket || this.stopping) return;
             this.connected = true;
             this._handshakeSuccessful = false;
             this._usingFallback = this.url === this.fallbackUrl;
@@ -174,32 +190,28 @@ export class WebSocketBridge {
             this.emitConnectionStateChange();
         };
 
-
-
-        this.socket.onmessage = (event) => {
-
-            this.handleMessage(
-                event.data
-            );
+        socket.onmessage = (event) => {
+            if (this.socket !== socket) return;
+            this.handleMessage(event.data);
         };
 
-        this.socket.onerror = (error) => {
-
-            console.error(
-                "[WebSocket] Error",
-                error
-            );
-
+        socket.onerror = (error) => {
+            if (this.socket === socket) {
+                console.error("[WebSocket] Error", error);
+            }
         };
 
-        this.socket.onclose = () => {
-
+        socket.onclose = () => {
+            if (this.socket !== socket) return;
+            this.socket = null;
             this.connected = false;
             this.authenticated = false;
             this.authPending = false;
             this.sessionId = null;
             clearTimeout(this._sessionRefreshTimer);
             this._sessionRefreshTimer = null;
+            clearTimeout(this._connectionHealthTimer);
+            this._connectionHealthTimer = null;
             this.sessionExpiresAt = 0;
             if (this._loginReject) {
                 this._loginReject(new Error("WebSocket disconnected during login"));
@@ -224,9 +236,7 @@ export class WebSocketBridge {
                         this.fallbackUrl
                     );
                     this.url = this.fallbackUrl;
-                    setTimeout(() => {
-                        this.connect();
-                    }, 1000); // Faster retry for fallback
+                    this._scheduleReconnect(1000);
                 } else {
                     // Connection refused on final URL or after successful handshake
                     if (this._handshakeSuccessful) {
@@ -240,21 +250,58 @@ export class WebSocketBridge {
                         );
                     }
                     
-                    if (!this.stopping) {
-                        const retryDelay = this.reconnectDelay;
-                        this.reconnectDelay = Math.min(
-                            this.reconnectDelay * 2,
-                            this.maxReconnectDelay
-                        );
-                        setTimeout(() => {
-                            if (!this.stopping) {
-                                this.connect();
-                            }
-                        }, retryDelay);
-                    }
+                    const retryDelay = this.reconnectDelay;
+                    this.reconnectDelay = Math.min(
+                        this.reconnectDelay * 2,
+                        this.maxReconnectDelay
+                    );
+                    this._scheduleReconnect(retryDelay);
                 }
             }
         };
+    }
+
+    _scheduleReconnect(delay) {
+        if (this.stopping || this._reconnectTimer) return;
+        this._reconnectTimer = setTimeout(() => {
+            this._reconnectTimer = null;
+            if (!this.stopping) this.connect();
+        }, delay);
+    }
+
+    _scheduleConnectionHealthCheck() {
+        clearTimeout(this._connectionHealthTimer);
+        this._connectionHealthTimer = null;
+        if (!this.connected || !this.authenticated) return;
+
+        this._connectionHealthTimer = setTimeout(async () => {
+            this._connectionHealthTimer = null;
+            if (!this.connected || !this.authenticated) return;
+            const socket = this.socket;
+
+            try {
+                const response = await this.sendWithResponse(
+                    "refresh_session",
+                    {},
+                    CONNECTION_HEALTH_CHECK_TIMEOUT_MS
+                );
+                if (this.socket !== socket || !this.connected || !this.authenticated) return;
+                if (!response.ok) {
+                    throw new Error(response.error || "Session health check was rejected");
+                }
+
+                this._scheduleSessionRefresh(response.result?.expires_in);
+                if (!this.sessionExpiresAt) {
+                    throw new Error("Server returned an invalid session lifetime");
+                }
+                this._scheduleConnectionHealthCheck();
+            } catch (error) {
+                console.warn("[WebSocket] Connection health check failed:", error);
+                if (this.socket === socket && socket) {
+                    socket.close();
+                }
+            }
+        }, CONNECTION_HEALTH_CHECK_INTERVAL_MS);
     }
 
     handleMessage(raw) {
@@ -275,6 +322,8 @@ export class WebSocketBridge {
         if (!data || typeof data !== "object") {
             return;
         }
+
+        this._scheduleConnectionHealthCheck();
 
         switch (data.type) {
 
@@ -365,6 +414,7 @@ export class WebSocketBridge {
                 this.sessionId = data.session_id ?? null;
                 this._handshakeSuccessful = true;
                 this._scheduleSessionRefresh(data.expires_in);
+                this._scheduleConnectionHealthCheck();
                 this.emitConnectionStateChange();
                 console.log("[WebSocket] Logged in");
                 if (this._loginResolve) {
@@ -709,14 +759,27 @@ export class WebSocketBridge {
 
     disconnect() {
         this.stopping = true;
+        clearTimeout(this._reconnectTimer);
+        this._reconnectTimer = null;
+        clearTimeout(this._connectionHealthTimer);
+        this._connectionHealthTimer = null;
+        clearTimeout(this._sessionRefreshTimer);
+        this._sessionRefreshTimer = null;
 
-        if (this.socket) {
-            this.socket.close();
-
-        }
+        const socket = this.socket;
+        this.socket = null;
+        if (socket) socket.close();
         this.connected = false;
+        this.authenticated = false;
+        this.authPending = false;
+        this.sessionId = null;
+        this.sessionExpiresAt = 0;
         this._handshakeSuccessful = false;
         this._triedFallback = false;
+        if (this._loginReject) {
+            this._loginReject(new Error("WebSocket disconnected"));
+        }
+        this.emitConnectionStateChange();
 
     }
 

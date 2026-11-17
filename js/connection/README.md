@@ -125,6 +125,7 @@ bridge.onLog((message, level) => {
 │  - sendWithResponse(action, payload) → Promise          │
 │  - onStateUpdate(callback) / onLog(callback)            │
 │  - Auto-reconnect with fallback logic                   │
+│  - Authenticated health check detects half-open sockets │
 └─────────────────────────────────────────────────────────┘
                         │
                         ▼
@@ -152,6 +153,10 @@ Matches Python's `RemoteUI/core/interface.py` behavior:
 2. **If connection fails BEFORE successful handshake** → switch to fallback URL (ws://localhost:61000)
 3. **If connection fails AFTER successful handshake** → retry same URL (don't switch)
 4. **If fallback also fails** → stop retrying
+
+After login, an idle connection checks `refresh_session` every 60 seconds. A
+missing or rejected response closes the stale socket so the normal reconnect
+and login flow can recover. Incoming server messages reset the idle timer.
 
 ## Packet Format
 

@@ -31,12 +31,21 @@
   <form class="auth-form" id="login-form">
     <label class="field">
       <span>Username</span>
-      <input type="text" id="username" value="mizu" autocomplete="username" />
+      <input type="text" id="username" autocomplete="username" />
     </label>
     <label class="field">
       <span>Password</span>
-      <input type="password" id="password" value="mizu" autocomplete="current-password" />
+      <input type="password" id="password" autocomplete="current-password" />
     </label>
+    <div class="remember-login" id="remember-login-controls" hidden>
+      <label class="remember-login__check">
+        <input type="checkbox" id="remember-password" />
+        <span>Remember password</span>
+      </label>
+      <button class="remember-login__forget" id="forget-remembered-login" type="button" hidden>
+        Forget saved login
+      </button>
+    </div>
     <div class="login-error" id="login-error" role="alert" aria-live="assertive" hidden>
       <span class="login-error__icon" aria-hidden="true">!</span>
       <span class="login-error__message"></span>
