@@ -27,6 +27,18 @@ window.connection = {
   subscribeToOverlayEvents,
 };
 
+window.electronAPI?.onChatSendMessageRequest?.(async ({ requestId, message, as }) => {
+  let response;
+  try {
+    const bridge = window.connection.getBridge();
+    if (!bridge?.connected) throw new Error('The WebUI is not connected to the bot server.');
+    response = await bridge.sendWithResponse('send_chat_message', { message, as });
+  } catch (error) {
+    response = { ok: false, error: error.message || String(error) };
+  }
+  window.electronAPI.respondToChatSendMessage(requestId, response);
+});
+
 // Expose state globally for pages
 window.state = state;
 

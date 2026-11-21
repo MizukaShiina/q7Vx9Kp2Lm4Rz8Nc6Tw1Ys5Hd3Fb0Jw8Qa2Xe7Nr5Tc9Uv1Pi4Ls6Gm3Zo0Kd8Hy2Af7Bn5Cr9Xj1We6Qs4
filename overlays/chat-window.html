@@ -45,6 +45,20 @@
     .chat-message__body { color: #f0edf3; font-size: var(--chat-font-size, 13px); line-height: 1.45; }
     .badge { width: 17px; height: 17px; object-fit: contain; }
     .emote { height: 1.2em; margin: -.2em .1em .1em; vertical-align: middle; }
+    .chat-composer { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: end; gap: 7px; padding: 9px 10px; border-top: 1px solid rgba(195,164,229,.16); background: rgba(13,11,18,.97); -webkit-app-region: no-drag; }
+    .chat-composer__sender { display: grid; gap: 4px; color: #c8c1d1; font-size: 9px; font-weight: 700; }
+    .chat-composer__sender select,
+    .chat-composer__message { width: 100%; min-width: 0; height: 32px; padding: 6px 8px; border: 1px solid rgba(255,255,255,.14); border-radius: 7px; outline: none; background: rgba(255,255,255,.045); color: #f5f1fa; font: 10px "Segoe UI", sans-serif; }
+    .chat-composer__sender select { min-width: 88px; background-color: #211b2a; color: #f5f1fa; color-scheme: dark; cursor: pointer; }
+    .chat-composer__sender select option { background-color: #211b2a; color: #f5f1fa; }
+    .chat-composer__sender select option:checked { background-color: #653f8f; color: #fff; }
+    .chat-composer__sender select:focus,
+    .chat-composer__message:focus { border-color: rgba(190,145,255,.65); }
+    .chat-composer__send { height: 32px; }
+    .chat-composer__send:disabled { cursor: not-allowed; opacity: .5; }
+    .chat-composer__status { grid-column: 1 / -1; min-height: 1em; color: #a59bac; font-size: 9px; }
+    .chat-composer__status[data-state="success"] { color: #8de5ab; }
+    .chat-composer__status[data-state="error"] { color: #ff9aab; }
     .chat-jump { position: absolute; right: 15px; bottom: 14px; z-index: 1; padding: 8px 11px; border-color: rgba(145,70,255,.45); background: #282034; color: #e4d2ff; }
     .chat-jump[hidden] { display: none; }
     body[data-show-timestamps="false"] .chat-message__time,
@@ -78,6 +92,19 @@
   <main class="chat-feed" id="chat-feed" role="log" aria-live="polite" aria-label="Twitch chat">
     <div class="chat-empty" id="chat-empty">Waiting for chat messages…</div>
   </main>
+  <form class="chat-composer" id="chat-composer">
+    <label class="chat-composer__sender" for="chat-send-as">
+      <span>Send as</span>
+      <select id="chat-send-as">
+        <option value="streamer">Streamer</option>
+        <option value="bot">Bot</option>
+      </select>
+    </label>
+    <input class="chat-composer__message" id="chat-send-message" type="text" maxlength="500"
+      autocomplete="off" placeholder="Type a message…" aria-label="Chat message" required>
+    <button class="chat-composer__send" id="chat-send-button" type="submit" disabled>Send</button>
+    <span class="chat-composer__status" id="chat-send-status" role="status" aria-live="polite"></span>
+  </form>
   <button class="chat-jump" id="chat-jump" type="button" hidden>↓ New messages</button>
   <script src="script.js"></script>
   <script>
@@ -94,10 +121,20 @@
       const opacity = document.getElementById('chat-opacity');
       const showTimestamps = document.getElementById('chat-show-timestamps');
       const showBadges = document.getElementById('chat-show-badges');
+      const composer = document.getElementById('chat-composer');
+      const sendAs = document.getElementById('chat-send-as');
+      const sendMessage = document.getElementById('chat-send-message');
+      const sendButton = document.getElementById('chat-send-button');
+      const sendStatus = document.getElementById('chat-send-status');
       const preferencesKey = 'mizubot:chat-window:display:v1';
       const defaultPreferences = { fontSize: 13, opacity: 94, timestamps: true, badges: true };
       let messageCount = 0;
       let followLatest = true;
+      let sendingMessage = false;
+
+      function updateSendButton() {
+        sendButton.disabled = sendingMessage || !sendMessage.value.trim();
+      }
 
       function readPreferences() {
         try {
@@ -202,6 +239,42 @@
         count.textContent = 'Waiting for messages';
         empty.hidden = false;
         jump.hidden = true;
+      });
+
+      sendMessage.addEventListener('input', updateSendButton);
+      composer.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const message = sendMessage.value.trim();
+        const sender = sendAs.value;
+        if (!message || sendingMessage) return;
+
+        sendingMessage = true;
+        sendStatus.dataset.state = 'pending';
+        sendStatus.textContent = 'Sending…';
+        updateSendButton();
+        sendAs.disabled = true;
+        sendMessage.disabled = true;
+
+        try {
+          if (typeof window.chatWindowAPI?.sendChatMessage !== 'function') {
+            throw new Error('Chat sending is unavailable in this window.');
+          }
+          const response = await window.chatWindowAPI.sendChatMessage(message, sender);
+          if (response?.ok !== true || response?.result !== true) {
+            throw new Error(response?.error || 'The server did not confirm the message.');
+          }
+          sendMessage.value = '';
+          sendStatus.dataset.state = 'success';
+          sendStatus.textContent = `Sent as ${sender}.`;
+        } catch (error) {
+          sendStatus.dataset.state = 'error';
+          sendStatus.textContent = `Could not send: ${error.message || error}`;
+        } finally {
+          sendingMessage = false;
+          sendAs.disabled = false;
+          sendMessage.disabled = false;
+          updateSendButton();
+        }
       });
 
       settingsToggle.addEventListener('click', () => {
