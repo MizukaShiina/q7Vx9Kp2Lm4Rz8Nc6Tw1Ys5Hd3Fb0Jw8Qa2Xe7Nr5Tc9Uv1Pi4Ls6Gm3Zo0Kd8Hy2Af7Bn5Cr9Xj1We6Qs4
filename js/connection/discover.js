@@ -4,11 +4,12 @@
 //
 // Resolution order (implemented by resolveBotUrl):
 //   1. ?ws= query param           - explicit override, always wins
-//   2. saved URL in localStorage  - probed once; purged when unreachable
-//   3. ws://127.0.0.1:61000       - fast path; keeps same-PC behavior instant
-//   4. derived default URL        - today's behavior (page hostname), probed
-//   5. LAN scan of candidate IPs  - first ws://<ip>:61000 that opens wins
-//   6. derived default URL        - nothing found; hand it to the retry loop
+//   2. Electron dev mode          - localhost only
+//   3. AWS VPS                    - preferred production endpoint
+//   4. saved URL in localStorage  - probed once; purged when unreachable
+//   5. ws://127.0.0.1:61000       - same-PC fast path
+//   6. derived URL and LAN scan   - try discovered local endpoints
+//   7. AWS VPS                    - last resort, retry loop takes over
 //
 // Probing uses plain WebSocket opens - no dependencies, no bot-side changes
 // (the bot already listens on 0.0.0.0:61000). A successful probe socket is
@@ -282,30 +283,42 @@ export async function resolveBotUrl() {
   );
   if (paramUrl) return paramUrl;
 
-  // 2. AWS VPS default.
+  // Dev mode must never fall through to a saved endpoint or the production VPS.
+  if (typeof window.electronAPI?.isDevMode === 'function') {
+    try {
+      if (await window.electronAPI.isDevMode()) {
+        console.info('[Discover] Dev mode enabled; using localhost only.');
+        return LOCALHOST_URL;
+      }
+    } catch (error) {
+      console.warn('[Discover] Could not determine dev mode:', error);
+    }
+  }
+
+  // Production VPS: use it when reachable, otherwise discover a local endpoint.
   const VPS_URL = 'ws://52.64.100.132:61000';
 
   if (await probeWs(VPS_URL)) {
     return VPS_URL;
   }
 
-  // 3. Previously discovered URL.
+  // Previously discovered URL.
   const savedUrl = readSavedUrl();
   if (savedUrl) {
     if (await probeWs(savedUrl)) return savedUrl;
     clearSavedUrl();
   }
 
-  // 4. Same-PC fallback.
+  // Same-PC fallback.
   if (await probeWs(LOCALHOST_URL)) return LOCALHOST_URL;
 
-  // 5. Derived hostname.
+  // Derived hostname.
   const derived = normalizeWsUrl(getDefaultConnectionUrl());
   if (derived && derived !== LOCALHOST_URL && (await probeWs(derived))) {
     return derived;
   }
 
-  // 6. LAN scan.
+  // LAN scan.
   try {
     const candidates = (await getCandidateUrls()).filter(
       (url) => url !== LOCALHOST_URL &&
@@ -322,7 +335,7 @@ export async function resolveBotUrl() {
     console.warn('[Discover] LAN scan failed:', error);
   }
 
-  // 7. Keep retrying the VPS if nothing is reachable.
+  // Keep retrying the VPS if nothing is reachable.
   return VPS_URL;
 }
 

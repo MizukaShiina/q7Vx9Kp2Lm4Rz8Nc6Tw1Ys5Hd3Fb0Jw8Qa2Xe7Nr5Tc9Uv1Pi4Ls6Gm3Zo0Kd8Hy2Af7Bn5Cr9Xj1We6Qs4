@@ -21,12 +21,14 @@
   // Same client id / scopes / redirect as WebUI/generate_token.py.
   const FALLBACK_CLIENT_ID = '7ectttj7x6hnbbg4epyv488r3bwlf4';
   const REDIRECT_URI = 'http://localhost';
+
   const SCOPES = [
     'chat:read',
     'chat:edit',
     'moderator:read:chatters',
     'moderator:read:followers',
   ];
+
   const STREAMER_SCOPES = [
     ...SCOPES,
     'channel:manage:polls',
@@ -34,6 +36,8 @@
     'channel:read:subscriptions',
     'channel:manage:broadcast',
     'channel:read:redemptions',
+    'channel:manage:redemptions',
+    'user:manage:whispers',
   ];
 
   const TARGETS = [

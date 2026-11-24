@@ -277,6 +277,11 @@
   /* overflow-y: auto; */
 }
 
+.entrants-card .table-scroll {
+  max-height: none;
+  overflow: visible;
+}
+
 .giveaway-title-row {
   display: flex;
   align-items: center;

@@ -1241,7 +1241,12 @@ window.pageControllers.giveaway = function () {
             .join('');
     }
 
-    async function sendGiveawayCommand(command, successMessage, timeout = 10000) {
+    async function sendGiveawayCommand(
+        command,
+        successMessage,
+        timeout = 10000,
+        successTone = "info"
+    ) {
         if (!window.connection || !window.connection.isConnected()) {
             showToast("Not connected to server.", "warning");
             return;
@@ -1252,7 +1257,7 @@ window.pageControllers.giveaway = function () {
 
         if (response.ok) {
             if (successMessage) {
-                showToast(successMessage, "info");
+                showToast(successMessage, successTone);
             }
         } else {
             showToast(`Failed: ${response.error}`, "warning");
@@ -1261,12 +1266,22 @@ window.pageControllers.giveaway = function () {
 
     // Rolls can take minutes to resolve (async verification), so disable the
     // button and put it in a busy state until the server responds.
-    async function runRollWinner(successMessage) {
+    async function runRollWinner(successMessage, pendingMessage = "Rolling winner...") {
         rollActionPending = true;
         mainAction.disabled = true;
         mainAction.textContent = "Rolling…";
+        showToast(pendingMessage, "info", 0);
         try {
-            await sendGiveawayCommand("roll_winner", successMessage, ROLL_TIMEOUT);
+            await sendGiveawayCommand(
+                "roll_winner",
+                successMessage,
+                ROLL_TIMEOUT,
+                "success"
+            );
+        } catch (error) {
+            console.error("[Giveaway] Winner roll failed:", error);
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            showToast(`Roll failed: ${errorMessage}`, "error");
         } finally {
             rollActionPending = false;
             mainAction.disabled = false;
@@ -1418,7 +1433,10 @@ window.pageControllers.giveaway = function () {
         if (gwState === "ROLLING") {
 
             if (winners === 0) {
-                await runRollWinner("Rolling first winner...");
+                await runRollWinner(
+                    "Winner #1 selected.",
+                    "Rolling first winner..."
+                );
                 return;
             }
 
@@ -1427,7 +1445,10 @@ window.pageControllers.giveaway = function () {
                 "warning",
                 0,
                 async () => {
-                    await runRollWinner(`Winner #${winners + 1} selected.`);
+                    await runRollWinner(
+                        `Winner #${winners + 1} selected.`,
+                        `Rolling winner #${winners + 1}...`
+                    );
                 }
             );
 
@@ -1451,7 +1472,7 @@ window.pageControllers.giveaway = function () {
 
             case "ROLLING":
                 showRollModal(async () => {
-                    await runRollWinner("Rolling winner...");
+                    await runRollWinner("Winner selected.", "Rolling winner...");
                 });
                 break;
         }
