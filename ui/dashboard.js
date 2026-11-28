@@ -45,6 +45,10 @@ const pageMeta = {
     subtitle: 'Giveaway flow, prizes, and participation tracking.',
     summary: 'Prepare the live giveaway experience and monitor its state at a glance.',
   },
+  campaign: {
+    subtitle: 'Manage campaign rewards, participants, raids, and winner draws.',
+    summary: 'Prepare campaign rewards and monitor participants, raids, and draw progress.',
+  },
   userevents: {
     subtitle: 'Create polls and predictions, then track live results.',
     summary: 'Manage Twitch audience interactions from one live control surface.',
@@ -98,6 +102,7 @@ registerPage({ id: 'announcement', name: 'Announcement', icon: '✦', path: './u
 registerPage({ id: 'commands', name: 'Commands', icon: '⌘', path: './ui/pages/commands/index.html', cssPath: './ui/pages/commands/style.css', jsPath: './ui/pages/commands/script.js', sensitive: false, group: 'stream' });
 registerPage({ id: 'streamdeck', name: 'Stream Deck', icon: '▦', path: './ui/pages/streamdeck/index.html', cssPath: './ui/pages/streamdeck/style.css', jsPath: './ui/pages/streamdeck/script.js', sensitive: false, group: 'stream' });
 registerPage({ id: 'giveaway', name: 'Giveaway', icon: '🎁', path: './ui/pages/giveaway/index.html', cssPath: './ui/pages/giveaway/style.css', jsPath: './ui/pages/giveaway/script.js', sensitive: false, group: 'stream' });
+registerPage({ id: 'campaign', name: 'Campaign', icon: '🎯', path: './ui/pages/campaign/index.html', cssPath: './ui/pages/campaign/style.css', jsPath: './ui/pages/campaign/script.js', sensitive: false, group: 'stream' });
 registerPage({ id: 'userevents', name: 'User Events', icon: '✦', path: './ui/pages/userevents/index.html', cssPath: './ui/pages/userevents/style.css', jsPath: './ui/pages/userevents/script.js', preScripts: ['./ui/pages/userevents/templates.js'], sensitive: false, group: 'stream' });
 registerPage({ id: 'responses', name: 'Responses', icon: '↺', path: './ui/pages/responses/index.html', cssPath: './ui/pages/responses/style.css', jsPath: './ui/pages/responses/script.js', sensitive: false, group: 'stream' });
 // registerPage({ id: 'stream-dashboard', name: 'Stream Dashboard', icon: '◍', path: './ui/pages/stream-dashboard/index.html', jsPath: './ui/pages/stream-dashboard/script.js', sensitive: false, group: 'main' });

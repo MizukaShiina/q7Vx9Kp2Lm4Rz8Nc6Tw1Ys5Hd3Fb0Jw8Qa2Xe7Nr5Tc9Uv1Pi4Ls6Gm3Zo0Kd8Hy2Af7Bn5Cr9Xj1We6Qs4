@@ -1,0 +1,361 @@
+<section class="campaign-page campaign-view" id="campaign-main-view">
+  <div class="campaign-topline">
+    <span class="campaign-preview-badge" id="campaign-data-badge"><span aria-hidden="true"></span><span id="campaign-data-status">Waiting for live data</span></span>
+    <span class="campaign-platform-badge" id="campaign-platform-label">CAMPAIGN</span>
+    <span class="campaign-current-title" id="campaign-current-title">Loading campaign…</span>
+  </div>
+
+  <div class="campaign-stats" aria-label="Campaign overview">
+    <article class="campaign-stat campaign-stat--state">
+      <span class="campaign-stat__label">Campaign status</span>
+      <strong><span class="campaign-live-dot" aria-hidden="true"></span><span class="campaign-status-text" id="campaign-status-label">Loading</span></strong>
+      <small id="campaign-status-detail">Waiting for campaign state</small>
+    </article>
+    <article class="campaign-stat">
+      <span class="campaign-stat__label">Entries</span>
+      <strong id="campaign-entry-count">—</strong>
+      <small id="campaign-unique-count">— unique participants</small>
+    </article>
+    <article class="campaign-stat">
+      <span class="campaign-stat__label">Raid viewers</span>
+      <strong id="campaign-raid-viewer-total">—</strong>
+      <small id="campaign-raid-count">Across — raids</small>
+    </article>
+    <article class="campaign-stat">
+      <span class="campaign-stat__label">Campaign runtime</span>
+      <strong id="campaign-runtime-value">—</strong>
+      <small id="campaign-runtime-detail">Not started</small>
+    </article>
+  </div>
+
+  <section class="campaign-lifecycle" aria-label="Campaign progress">
+    <div class="campaign-lifecycle__step" data-campaign-step="IDLE">
+      <span class="campaign-lifecycle__marker" aria-hidden="true">✓</span>
+      <div><strong>Idle</strong><small>Prepared</small></div>
+    </div>
+    <span class="campaign-lifecycle__connector" data-campaign-connector="0" aria-hidden="true"></span>
+    <div class="campaign-lifecycle__step" data-campaign-step="ACTIVE">
+      <span class="campaign-lifecycle__marker" aria-hidden="true">02</span>
+      <div><strong>Active</strong><small>Accepting entries</small></div>
+    </div>
+    <span class="campaign-lifecycle__connector" data-campaign-connector="1" aria-hidden="true"></span>
+    <div class="campaign-lifecycle__step" data-campaign-step="CLOSED">
+      <span class="campaign-lifecycle__marker" aria-hidden="true">03</span>
+      <div><strong>Locked</strong><small>Entries closed</small></div>
+    </div>
+    <span class="campaign-lifecycle__connector" data-campaign-connector="2" aria-hidden="true"></span>
+    <div class="campaign-lifecycle__step" data-campaign-step="DRAWN">
+      <span class="campaign-lifecycle__marker" aria-hidden="true">04</span>
+      <div><strong>Drawn</strong><small>Winner selected</small></div>
+    </div>
+  </section>
+
+  <div class="campaign-layout">
+    <div class="campaign-main-column">
+      <section class="campaign-card campaign-setup-card">
+        <div class="campaign-card__header">
+          <div>
+            <p class="campaign-section-label">Campaign setup</p>
+            <h3>Reward details</h3>
+          </div>
+          <span class="campaign-edit-hint">Changes auto-save</span>
+        </div>
+        <div class="campaign-fields">
+          <label class="campaign-field">
+            <span>Campaign title</span>
+            <input type="text" id="campaign-title-value" value="" placeholder="No title set" maxlength="120" />
+          </label>
+          <label class="campaign-field">
+            <span>Reward</span>
+            <input type="text" id="campaign-reward-value" value="" placeholder="No reward set" maxlength="200" />
+          </label>
+        </div>
+        <p class="campaign-metadata-status" id="campaign-metadata-status" role="status" aria-live="polite">Campaign details save automatically.</p>
+        <div class="campaign-redemption-note">
+          <span class="campaign-redemption-icon"><img src="./assets/logo.svg" alt="" aria-hidden="true" /></span>
+          <div><strong id="campaign-redemption-title">Campaign entry</strong><small id="campaign-redemption-detail">Loading redemption settings…</small></div>
+          <span class="campaign-reward-cost" id="campaign-redemption-cost">—</span>
+        </div>
+      </section>
+
+      <section class="campaign-card campaign-controls-card">
+        <div class="campaign-card__header">
+          <div>
+            <p class="campaign-section-label">Campaign controls</p>
+            <h3>Manage the campaign</h3>
+          </div>
+          <div class="campaign-controls-header-actions">
+            <button class="campaign-button campaign-button--quiet campaign-settings-trigger" type="button" id="campaign-settings-toggle" aria-label="Campaign settings">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9m4 0h3M4 17h3m4 0h9M13 4v6M7 14v6" /></svg>
+              Settings
+            </button>
+            <span class="campaign-state-chip"><span aria-hidden="true"></span><span id="campaign-control-state">Loading</span></span>
+          </div>
+        </div>
+        <div class="campaign-actions">
+          <button class="campaign-button campaign-button--primary" type="button" id="campaign-primary-action" disabled>
+            <span aria-hidden="true" id="campaign-primary-action-icon">▶</span>
+            <span id="campaign-primary-action-label">Start campaign</span>
+          </button>
+          <button class="campaign-button campaign-button--secondary" type="button" id="campaign-draw-action" disabled>
+            <img src="./assets/logo.svg" alt="" aria-hidden="true" /> Draw winner
+          </button>
+          <button class="campaign-button campaign-button--quiet" type="button" id="campaign-finish-action" disabled>
+            Finish &amp; archive
+          </button>
+        </div>
+        <p class="campaign-controls-note" id="campaign-controls-note">Campaign controls are waiting for live state.</p>
+        <p class="campaign-controls-status" id="campaign-controls-status" role="status" aria-live="polite"></p>
+      </section>
+
+      <section class="campaign-card campaign-entries-card">
+        <div class="campaign-card__header">
+          <div>
+            <p class="campaign-section-label">Participants</p>
+            <h3>Campaign entries <span class="campaign-count-badge" id="campaign-table-entry-count">0</span></h3>
+          </div>
+          <button class="campaign-text-button" type="button" disabled>View all <span aria-hidden="true">↗</span></button>
+        </div>
+        <div class="campaign-table-wrap">
+          <table class="campaign-table">
+            <thead>
+              <tr><th>Participant</th><th>Entry source</th><th>Weight</th><th>Odds</th></tr>
+            </thead>
+            <tbody id="campaign-entries-body">
+              <tr><td colspan="4" class="campaign-empty-row">Waiting for campaign data…</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="campaign-table-footer"><span id="campaign-table-summary">Waiting for entries</span><span>Odds use total entry weight</span></div>
+      </section>
+    </div>
+
+    <aside class="campaign-side-column">
+      <section class="campaign-card campaign-winner-card">
+        <div class="campaign-card__header">
+          <div>
+            <p class="campaign-section-label">Winner</p>
+            <h3>Winner reveal</h3>
+          </div>
+          <span class="campaign-winner-mark"><img src="./assets/logo.svg" alt="" aria-hidden="true" /></span>
+        </div>
+        <div class="campaign-winner-empty" id="campaign-winner-panel">
+          <span class="campaign-winner-orbit campaign-winner-orbit--outer" aria-hidden="true"></span>
+          <span class="campaign-winner-orbit campaign-winner-orbit--inner" aria-hidden="true"></span>
+          <span class="campaign-winner-star"><img src="./assets/logo.svg" alt="" aria-hidden="true" /></span>
+          <strong id="campaign-winner-name">No winner yet</strong>
+          <p id="campaign-winner-detail">Lock entries to prepare for the draw.</p>
+          <div class="campaign-winner-stats" id="campaign-winner-stats" aria-label="Current draw details" hidden></div>
+          <ol class="campaign-winners-list" id="campaign-winners-list" hidden></ol>
+        </div>
+      </section>
+
+      <section class="campaign-card campaign-activity-card">
+        <div class="campaign-card__header">
+          <div>
+            <p class="campaign-section-label">Live feed</p>
+            <h3>Campaign activity</h3>
+          </div>
+          <span class="campaign-live-label"><span aria-hidden="true"></span> LIVE</span>
+        </div>
+        <ol class="campaign-activity-list" id="campaign-activity-list">
+          <li class="campaign-empty-row">Waiting for campaign activity…</li>
+        </ol>
+        <p class="campaign-activity-footnote" id="campaign-activity-footnote">Activity from the current campaign</p>
+      </section>
+
+      <section class="campaign-card campaign-raids-card">
+        <div class="campaign-card__header">
+          <div>
+            <p class="campaign-section-label">Community boost</p>
+            <h3>Recent raids</h3>
+          </div>
+          <span class="campaign-raids-total" id="campaign-raids-total">0 raids</span>
+        </div>
+        <div class="campaign-raids-list" id="campaign-raids-list">
+          <p class="campaign-empty-row">No campaign raids yet.</p>
+        </div>
+        <div class="campaign-raids-footer" id="campaign-raids-footer">Raid contributions influence entry weighting.</div>
+      </section>
+    </aside>
+  </div>
+</section>
+
+<section class="campaign-page campaign-view campaign-secondary-view" id="campaign-history-view" hidden>
+  <div class="campaign-secondary-heading">
+    <div>
+      <p class="campaign-eyebrow">Campaign records</p>
+      <h2>Campaign history</h2>
+      <p>Review archived campaigns or restore one when no campaign is active.</p>
+    </div>
+    <span class="campaign-preview-badge" id="campaign-history-badge"><span aria-hidden="true"></span><span id="campaign-history-badge-text">Loading archives</span></span>
+  </div>
+
+  <section class="campaign-card campaign-history-card">
+    <div class="campaign-card__header">
+      <div>
+        <p class="campaign-section-label">Archive</p>
+        <h3>Past campaigns <span class="campaign-count-badge" id="campaign-history-count">0</span></h3>
+      </div>
+      <span class="campaign-edit-hint" id="campaign-history-live-state">Recovery requires an idle campaign</span>
+    </div>
+    <div class="campaign-table-wrap">
+      <table class="campaign-table campaign-history-table">
+        <thead>
+          <tr><th>Campaign</th><th>Completed</th><th>Entries</th><th>Winner(s)</th><th>Reward</th><th></th></tr>
+        </thead>
+        <tbody id="campaign-history-body">
+          <tr><td colspan="6" class="campaign-empty-row">Loading campaign history…</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="campaign-controls-note" id="campaign-history-status" role="status" aria-live="polite"></p>
+  </section>
+</section>
+
+<div class="campaign-modal-overlay" id="campaign-settings-modal" hidden>
+  <section class="campaign-modal" role="dialog" aria-modal="true" aria-labelledby="campaign-settings-title">
+    <header class="campaign-modal__header">
+      <div>
+        <p class="campaign-eyebrow">Campaign configuration</p>
+        <h2 id="campaign-settings-title">Entry settings</h2>
+        <p>Set redemption rules and participation weight.</p>
+      </div>
+      <button class="campaign-modal__close" type="button" data-campaign-modal-close aria-label="Close settings">&times;</button>
+    </header>
+    <div class="campaign-modal__body">
+      <section class="campaign-modal-section">
+        <div class="campaign-modal-section__heading">
+          <div><p class="campaign-section-label">Entry source</p><h3>Channel points</h3></div>
+          <label class="campaign-switch" for="campaign-eventsub-enabled">
+            <span class="sr-only">Enable campaign redemption</span>
+            <input id="campaign-eventsub-enabled" type="checkbox" />
+            <span aria-hidden="true"></span>
+          </label>
+        </div>
+        <p class="campaign-modal-help">Allow eligible viewers to enter by redeeming the campaign reward on Twitch.</p>
+        <div class="campaign-redemption-fields">
+          <label class="campaign-field">
+            <span>Redemption cost (points)</span>
+            <input id="campaign-eventsub-cost" type="number" min="1" step="1" />
+          </label>
+          <label class="campaign-field">
+            <span>Reward ID <small>Managed by Twitch</small></span>
+            <input id="campaign-eventsub-reward-id" type="text" readonly />
+          </label>
+        </div>
+      </section>
+
+      <section class="campaign-modal-section">
+        <div class="campaign-modal-section__heading">
+          <div><p class="campaign-section-label">Eligibility</p><h3>Entry limits</h3></div>
+        </div>
+        <div class="campaign-settings-grid">
+          <label class="campaign-field">
+            <span>Maximum entries per viewer</span>
+            <input id="campaign-max-entries" type="number" min="1" step="1" />
+          </label>
+          <label class="campaign-field">
+            <span>Base entry weight</span>
+            <input id="campaign-base-weight" type="number" min="0.0001" step="0.1" />
+          </label>
+          <label class="campaign-field">
+            <span>Required follow age (days)</span>
+            <input id="campaign-follow-age" type="number" min="0" step="1" />
+          </label>
+        </div>
+      </section>
+
+      <section class="campaign-modal-section">
+        <div class="campaign-modal-section__heading">
+          <div><p class="campaign-section-label">Participation bonus</p><h3>Subscription multipliers</h3></div>
+        </div>
+        <div class="campaign-settings-grid campaign-settings-grid--tiers">
+          <label class="campaign-field"><span>Tier 1</span><input id="campaign-sub-tier1" type="number" min="0" step="0.1" /></label>
+          <label class="campaign-field"><span>Tier 2</span><input id="campaign-sub-tier2" type="number" min="0" step="0.1" /></label>
+          <label class="campaign-field"><span>Tier 3</span><input id="campaign-sub-tier3" type="number" min="0" step="0.1" /></label>
+        </div>
+      </section>
+
+      <section class="campaign-modal-section">
+        <div class="campaign-modal-section__heading">
+          <div><p class="campaign-section-label">Weight curves</p><h3>Fine-tune bonuses</h3></div>
+        </div>
+        <div class="campaign-curve-options">
+          <button class="campaign-curve-option" type="button" data-open-campaign-curve="follow_graph">
+            <span><strong>Follow-age curve</strong><small id="campaign-follow-curve-summary">Loading curve settings…</small></span>
+            <span aria-hidden="true">Configure&nbsp; &rarr;</span>
+          </button>
+          <button class="campaign-curve-option" type="button" data-open-campaign-curve="raid_graph">
+            <span><strong>Raid viewer curve</strong><small id="campaign-raid-curve-summary">Loading curve settings…</small></span>
+            <span aria-hidden="true">Configure&nbsp; &rarr;</span>
+          </button>
+        </div>
+      </section>
+      <p class="campaign-modal-status" id="campaign-settings-status" role="status" aria-live="polite"></p>
+    </div>
+    <footer class="campaign-modal__footer">
+      <button class="campaign-button campaign-button--quiet" type="button" data-campaign-modal-close>Cancel</button>
+      <button class="campaign-button campaign-button--primary" type="button" id="campaign-settings-save">Save settings</button>
+    </footer>
+  </section>
+</div>
+
+<div class="campaign-modal-overlay" id="campaign-curve-modal" hidden>
+  <section class="campaign-modal campaign-curve-modal" role="dialog" aria-modal="true" aria-labelledby="campaign-curve-title">
+    <header class="campaign-modal__header">
+      <div>
+        <p class="campaign-eyebrow">Weight curve</p>
+        <h2 id="campaign-curve-title">Curve editor</h2>
+        <p id="campaign-curve-description">Adjust the bonus shape and preview it live.</p>
+      </div>
+
+      <button class="campaign-modal__close" type="button" data-campaign-modal-close aria-label="Close curve editor">&times;</button>
+    </header>
+    <div class="campaign-modal__body">
+      <div class="campaign-curve-fields">
+        <label class="campaign-field"><span>Starting value</span><input type="number" min="0" step="0.1" data-curve-param="starting_value" /></label>
+        <label class="campaign-field"><span>Maximum bonus</span><input type="number" min="0" step="0.1" data-curve-param="maximum_bonus" /></label>
+        <label class="campaign-field"><span>Transition point</span><input type="number" min="0.0001" step="1" data-curve-param="transition_point" /></label>
+        <label class="campaign-field"><span>Rise power</span><input type="number" min="0.0001" step="0.1" data-curve-param="rise_power" /></label>
+        <label class="campaign-field"><span>Fall power</span><input type="number" min="0.0001" step="0.1" data-curve-param="fall_power" /></label>
+      </div>
+      <div class="campaign-curve-chart-wrap">
+        <svg id="campaign-curve-chart" viewBox="0 0 720 300" role="img" aria-label="Live curve preview"></svg>
+      </div>
+      <p class="campaign-modal-status" id="campaign-curve-status" role="status" aria-live="polite"></p>
+    </div>
+    <footer class="campaign-modal__footer">
+      <button class="campaign-button campaign-button--quiet" type="button" data-campaign-modal-close>Back to settings</button>
+      <button class="campaign-button campaign-button--primary" type="button" id="campaign-curve-save">Save curve</button>
+    </footer>
+  </section>
+</div>
+
+<div class="campaign-modal-overlay" id="campaign-recover-modal" hidden>
+  <section class="campaign-modal campaign-recover-modal" role="dialog" aria-modal="true" aria-labelledby="campaign-recover-title">
+    <header class="campaign-modal__header">
+      <div>
+        <p class="campaign-eyebrow">Campaign archive</p>
+        <h2 id="campaign-recover-title">Recover campaign</h2>
+        <p id="campaign-recover-description">Choose how the archived campaign should be restored.</p>
+      </div>
+      <button class="campaign-modal__close" type="button" data-campaign-modal-close aria-label="Close recovery">&times;</button>
+    </header>
+    <div class="campaign-modal__body">
+      <p class="campaign-recover-warning">Recovery replaces live campaign data and is only available while the current campaign is Idle.</p>
+      <label class="campaign-field">
+        <span>Restore state</span>
+        <select id="campaign-recover-state">
+          <option value="ACTIVE">Active — reopen entries</option>
+          <option value="DRAWN">Drawn — keep winners and allow another draw</option>
+        </select>
+      </label>
+      <p class="campaign-modal-status" id="campaign-recover-status" role="status" aria-live="polite"></p>
+    </div>
+    <footer class="campaign-modal__footer">
+      <button class="campaign-button campaign-button--quiet" type="button" data-campaign-modal-close>Cancel</button>
+      <button class="campaign-button campaign-button--primary" type="button" id="campaign-recover-confirm">Recover campaign</button>
+    </footer>
+  </section>
+</div>
